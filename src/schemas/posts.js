@@ -1,4 +1,4 @@
-import { z } from "zod";
+const { z } = require("zod");
 
 const findPostSchema = z
   .object({
@@ -12,13 +12,13 @@ const findPostSchema = z
   });
 
 const createPostSchema = z.object({
-  title: z.string().min(1).required(),
+  title: z.string().min(1),
   content: z.string().min(1),
-  owner: z.string().min(1).require(),
+  owner: z.string().min(1),
 });
 
 const getPostById = z.object({
-  senderId: z.string().min(1).required(),
+  senderId: z.string().min(1),
 });
 
-module.exports = findPostBody;
+module.exports = { findPostSchema, createPostSchema };
