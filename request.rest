@@ -5,11 +5,11 @@ GET http://localhost:3000/posts
 
 ###
 
-GET http://localhost:3000/posts?senders=Kevin
+GET http://localhost:3000/posts?sender=Kevin
 
 ###
 
-GET http://localhost:3000/posts/6734b0c818a1cf8344804554
+GET http://localhost:3000/posts/6734b0c818a1cf8344804553
 
 ###
 
@@ -18,10 +18,48 @@ Content-Type: application/json
 
 {
     "title": "Hello",
-    "sender": "Kevin",
+    "sender": "Kevin2",
     "content": "Hello World..."
 }
 
 ###
 
-DELETE http://localhost:3000/posts/6734b0c818a1cf8344804554
+DELETE http://localhost:3000/posts/6734d959d9d641367d22f61f
+
+###
+
+GET http://localhost:3000/comments
+
+###
+
+GET http://localhost:3000/comments?postId=67387912cb100190cd60d144
+
+###
+
+GET http://localhost:3000/comments/6738835b613147878b7ba45f
+
+###
+
+POST http://localhost:3000/comments 
+Content-Type: application/json
+
+{
+  "sender": "Dor", 
+  "postId": "67387912cb100190cd60d145", 
+  "content": "This is my first comment"
+}
+
+###
+
+DELETE http://localhost:3000/comments/673882b1613147878b7ba45b
+
+###
+
+PUT http://localhost:3000/comments/6738835b613147878b7ba45f
+Content-Type: application/json
+
+{
+  "sender": "Dor", 
+  "postId": "67387912cb100190cd60d144", 
+  "content": "This is my second comment"
+}

@@ -19,6 +19,8 @@ router.post(
   postHandler.insert
 );
 
+router.delete("/:id", postHandler.deleteById)
+
 router.put(
   "/:id",
   validateData(postSchemas.updatePostSchema),
