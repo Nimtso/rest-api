@@ -7,6 +7,6 @@ const postSchema = require("../schemas/posts");
 const router = express.Router();
 
 router.get("/", postHandler.getAll);
-router.post("/", validateData(postSchema.create), postHandler.insert);
+router.post("/", validateData(postSchema.createPostSchema), postHandler.insert);
 
 module.exports = router;
