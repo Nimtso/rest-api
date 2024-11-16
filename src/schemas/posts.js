@@ -21,4 +21,4 @@ const getPostById = z.object({
   senderId: z.string().min(1),
 });
 
-module.exports = { findPostSchema, createPostSchema };
+module.exports = { findPostSchema, createPostSchema, getPostById };
