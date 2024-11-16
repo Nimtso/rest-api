@@ -1,6 +1,6 @@
 const { z } = require("zod");
 
-const findPostSchema = z.object({
+const findPostSchema = {
   query: z
     .object({
       title: z.string().min(1).optional(),
@@ -8,17 +8,17 @@ const findPostSchema = z.object({
       sender: z.string().min(1).optional(),
     })
     .strict(),
-});
+};
 
-const createPostSchema = z.object({
+const createPostSchema = {
   body: z.object({
     title: z.string().min(1),
     content: z.string().min(1),
     sender: z.string().min(1),
   }),
-});
+};
 
-const updatePostSchema = z.object({
+const updatePostSchema = {
   params: z.object({
     id: z.string(),
   }),
@@ -29,6 +29,6 @@ const updatePostSchema = z.object({
       sender: z.string().min(1).optional(),
     })
     .strict(),
-});
+};
 
 module.exports = { findPostSchema, createPostSchema, updatePostSchema };
