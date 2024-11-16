@@ -2,12 +2,23 @@ const express = require("express");
 
 const postHandler = require("../controllers/posts");
 const validateData = require("../middlewares/validators");
-const postSchema = require("../schemas/posts");
+const postSchemas = require("../schemas/posts");
 
 const router = express.Router();
 
-router.get("/", postHandler.findByFilter);
-router.post("/", validateData(postSchema.createPostSchema), postHandler.insert);
-router.get("/:id", validateData(postSchema.getPostById), postHandler.findById);
+router.get(
+  "/",
+  validateData(postSchemas.findPostSchema),
+  postHandler.findByFilter
+);
+router.get("/:id", postHandler.findById);
+
+router.post(
+  "/",
+  validateData(postSchemas.createPostSchema),
+  postHandler.insert
+);
+
+// router.put("/", validateData(), );
 
 module.exports = router;

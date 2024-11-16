@@ -14,11 +14,14 @@ const findById = async (req, res) => {
   if (!post.length) res.status(StatusCodes.NOT_FOUND);
   res.send(post);
 };
+const findAll = async (req, res) => {
+  const posts = await postModel.find({});
+  res.send(posts);
+};
 
 const findByFilter = async (req, res) => {
   const filter = req.query || {};
   const posts = await postModel.find(filter);
-  if (!posts.length) res.status(StatusCodes.NOT_FOUND);
   res.send(posts);
 };
 
@@ -35,6 +38,7 @@ const update = async (req, res) => {
 };
 
 module.exports = {
+  findAll,
   findById,
   findByFilter,
   deleteByFilter,

@@ -6,6 +6,7 @@ module.exports = (schema) => {
     try {
       if (schema.body) schema.parse(req.body);
       if (schema.params) schema.parse(req.params);
+      if (schema.query) schema.parse(req.query);
       next();
     } catch (error) {
       if (error instanceof ZodError) {
