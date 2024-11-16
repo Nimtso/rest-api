@@ -6,7 +6,8 @@ const postSchema = require("../schemas/posts");
 
 const router = express.Router();
 
-router.get("/", postHandler.getAll);
+router.get("/", postHandler.findByFilter);
 router.post("/", validateData(postSchema.createPostSchema), postHandler.insert);
+router.get("/:id", validateData(postSchema.getPostById), postHandler.findById);
 
 module.exports = router;

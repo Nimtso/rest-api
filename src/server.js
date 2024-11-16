@@ -21,7 +21,8 @@ const createServer = () => {
 };
 
 const connectDB = async () => {
-  connectMongo(URI_DB);
+  logger.info("Attempting to connect to DataBase.");
+  await connectMongo(URI_DB);
 };
 
 const init = async () => {
