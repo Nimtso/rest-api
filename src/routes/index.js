@@ -8,7 +8,7 @@ const postRoutes = require("./posts");
 
 const routes = express.Router();
 
-routes.use("/health", healthRoutes);
+routes.use("/about", healthRoutes);
 routes.use("/api-docs", swaggerUi.serve);
 routes.get("/api-docs", swaggerUi.setup(swaggerDocument));
 
