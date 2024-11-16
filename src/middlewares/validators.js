@@ -17,7 +17,7 @@ module.exports = (schema) => {
       } else {
         res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .json({ error: "Internal Server Error" });
+          .json({ error: "Internal Server Error", messsage: error?.message });
       }
     }
   };
