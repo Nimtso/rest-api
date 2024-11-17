@@ -19,6 +19,10 @@ router.post(
   postHandler.insert
 );
 
-// router.put("/", validateData(), );
+router.put(
+  "/:id",
+  validateData(postSchemas.updatePostSchema),
+  postHandler.update
+);
 
 module.exports = router;

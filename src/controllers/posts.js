@@ -32,9 +32,19 @@ const deleteByFilter = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const id = req.params.id;
   const updateFilter = req.body;
-  const updateResult = await postModel.updateMany(updateFilter);
-  res.send(updateResult);
+  const updateResult = await postModel.findOneAndUpdate(
+    { _id: id },
+    updateFilter
+  );
+
+  if (!updateResult)
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .send(`Cannot find post with id - ${id}`);
+
+  res.status(StatusCodes.OK).send(updateResult);
 };
 
 module.exports = {
