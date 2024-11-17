@@ -27,6 +27,14 @@ Content-Type: application/json
 DELETE http://localhost:3000/posts/6734b0c818a1cf8344804554
 
 ###
+PUT http://localhost:3000/posts/67386ba9b94d8cc02e519d61
+Content-Type: application/json
+
+{
+  "content": "Kevin3"
+}
+
+###
 
 GET http://localhost:3000/comments
 
