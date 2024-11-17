@@ -4,9 +4,9 @@ const { ZodError } = require("zod");
 module.exports = (schema) => {
   return (req, res, next) => {
     try {
-      if (schema.body) schema.parse(req.body);
-      if (schema.params) schema.parse(req.params);
-      if (schema.query) schema.parse(req.query);
+      if (schema.body) schema.body.parse(req.body);
+      if (schema.params) schema.params.parse(req.params);
+      if (schema.query) schema.query.parse(req.query);
       next();
     } catch (error) {
       if (error instanceof ZodError) {
