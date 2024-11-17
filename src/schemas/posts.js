@@ -18,4 +18,17 @@ const createPostSchema = z.object({
   }),
 });
 
-module.exports = { findPostSchema, createPostSchema };
+const updatePostSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z
+    .object({
+      title: z.string().min(1).optional(),
+      content: z.string().min(1).optional(),
+      owner: z.string().min(1).optional(),
+    })
+    .strict(),
+});
+
+module.exports = { findPostSchema, createPostSchema, updatePostSchema };
