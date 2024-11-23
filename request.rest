@@ -5,7 +5,7 @@ GET http://localhost:3000/posts
 
 ###
 
-GET http://localhost:3000/posts?owners=Kevin
+GET http://localhost:3000/posts?senders=Kevin
 
 ###
 
@@ -18,7 +18,7 @@ Content-Type: application/json
 
 {
     "title": "Hello",
-    "owner": "Kevin",
+    "sender": "Kevin",
     "content": "Hello World..."
 }
 

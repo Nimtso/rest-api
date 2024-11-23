@@ -5,7 +5,7 @@ const findPostSchema = z.object({
     .object({
       title: z.string().min(1).optional(),
       content: z.string().min(1).optional(),
-      owner: z.string().min(1).optional(),
+      sender: z.string().min(1).optional(),
     })
     .strict(),
 });
@@ -14,7 +14,7 @@ const createPostSchema = z.object({
   body: z.object({
     title: z.string().min(1),
     content: z.string().min(1),
-    owner: z.string().min(1),
+    sender: z.string().min(1),
   }),
 });
 
@@ -26,7 +26,7 @@ const updatePostSchema = z.object({
     .object({
       title: z.string().min(1).optional(),
       content: z.string().min(1).optional(),
-      owner: z.string().min(1).optional(),
+      sender: z.string().min(1).optional(),
     })
     .strict(),
 });
