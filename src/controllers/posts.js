@@ -11,9 +11,10 @@ const insert = async (req, res) => {
 const findById = async (req, res) => {
   const id = req.params.id;
   const post = await postModel.findById(id);
-  if (!post.length) res.status(StatusCodes.NOT_FOUND);
+  if (!post) res.status(StatusCodes.NOT_FOUND);
   res.send(post);
 };
+
 const findAll = async (req, res) => {
   const posts = await postModel.find({});
   res.send(posts);
@@ -25,10 +26,11 @@ const findByFilter = async (req, res) => {
   res.send(posts);
 };
 
-const deleteByFilter = async (req, res) => {
-  const filter = res.body;
-  const result = await postModel.deleteMany(filter);
-  res.send(result);
+const deleteById = async (req, res) => {
+  const id = req.params.id
+  const post = await postModel.findByIdAndDelete(id);
+  if (!post) return res.status(StatusCodes.NOT_FOUND).send("Cannot find post");
+  res.send("Post Deleted");
 };
 
 const update = async (req, res) => {
@@ -51,7 +53,7 @@ module.exports = {
   findAll,
   findById,
   findByFilter,
-  deleteByFilter,
+  deleteById,
   update,
   insert,
 };

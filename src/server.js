@@ -1,12 +1,14 @@
 const express = require("express");
+require("dotenv").config();
 
 const logger = require("./utils/logger");
 const routes = require("./routes/index");
 const loggerMiddleware = require("./middlewares/logger.js");
 const { connect: connectMongo } = require("../src/db/utils.js");
+const config = require("./utils/config.js");
 
-const PORT = 3000;
-const URI_DB = "mongodb://localhost:27017";
+const PORT = config.app.port;
+const URI_DB = config.database.uri;
 
 const createServer = () => {
   const app = express();
