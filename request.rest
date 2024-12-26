@@ -5,11 +5,11 @@ GET http://localhost:3000/posts
 
 ###
 
-GET http://localhost:3000/posts?sender=Kevin
+GET http://localhost:3000/posts?sender=Dor
 
 ###
 
-GET http://localhost:3000/posts/6734b0c818a1cf8344804553
+GET http://localhost:3000/posts/6741eed9d9d9a2e71f9362cc
 
 ###
 
@@ -24,7 +24,7 @@ Content-Type: application/json
 
 ###
 
-DELETE http://localhost:3000/posts/6734d959d9d641367d22f61f
+DELETE http://localhost:3000/posts/676d4ce7b1394c9748f893f3
 
 ###
 
@@ -63,3 +63,31 @@ Content-Type: application/json
   "postId": "67387912cb100190cd60d144", 
   "content": "This is my second comment"
 }
+
+
+###
+
+GET http://localhost:3000/users
+
+###
+
+GET http://localhost:3000/users?name=Dor
+
+###
+
+GET http://localhost:3000/users/676d4f2cec5ddd46e0314af3
+
+###
+
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "name": "Dor2",
+    "email": "2@.com",
+    "password": "123456"
+}
+
+###
+
+DELETE http://localhost:3000/users/676d4ff1ec5ddd46e0314aff

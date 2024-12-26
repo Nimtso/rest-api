@@ -10,7 +10,6 @@ import { connect as connectMongo } from "./db/utils";
 import config from "./utils/config";
 
 const PORT = config.app.port;
-const URI_DB = config.database.uri;
 
 const createServer = () => {
   const app = express();

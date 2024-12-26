@@ -5,6 +5,7 @@ import swaggerDocument from "../../swagger.json";
 import healthRoutes from "./health";
 import postRoutes from "./posts";
 import commentRoutes from "./comments";
+import usersRoutes from "./users";
 
 const routes = express.Router();
 
@@ -14,5 +15,6 @@ routes.get("/api-docs", swaggerUi.setup(swaggerDocument));
 
 routes.use("/posts", postRoutes);
 routes.use("/comments", commentRoutes);
+routes.use("/users", usersRoutes);
 
 export default routes;
