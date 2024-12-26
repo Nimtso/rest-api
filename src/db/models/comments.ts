@@ -1,10 +1,10 @@
-const { ObjectId } = require("mongodb");
-const mongoose = require("mongoose");
+import { ObjectId } from "mongodb";
+import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema({
   sender: {
     type: String,
-    required: true
+    required: true,
   },
   postId: {
     type: String,
@@ -15,4 +15,4 @@ const commentSchema = new mongoose.Schema({
 
 const commentModel = mongoose.model("Comments", commentSchema);
 
-module.exports = commentModel;
+export default commentModel;

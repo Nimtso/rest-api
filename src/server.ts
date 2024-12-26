@@ -1,11 +1,13 @@
-const express = require("express");
-require("dotenv").config();
+import express from "express";
+import dotenv from "dotenv";
 
-const logger = require("./utils/logger");
-const routes = require("./routes/index");
-const loggerMiddleware = require("./middlewares/logger.js");
-const { connect: connectMongo } = require("../src/db/utils.js");
-const config = require("./utils/config.js");
+dotenv.config();
+
+import logger from "./utils/logger";
+import routes from "./routes/index";
+import loggerMiddleware from "./middlewares/logger";
+import { connect as connectMongo } from "./db/utils";
+import config from "./utils/config";
 
 const PORT = config.app.port;
 const URI_DB = config.database.uri;
@@ -24,7 +26,7 @@ const createServer = () => {
 
 const connectDB = async () => {
   logger.info("Attempting to connect to DataBase.");
-  await connectMongo(URI_DB);
+  await connectMongo();
 };
 
 const init = async () => {
@@ -36,4 +38,4 @@ const init = async () => {
   });
 };
 
-module.exports = { createServer, init };
+export { createServer, init };
