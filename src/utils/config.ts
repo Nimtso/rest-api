@@ -1,5 +1,5 @@
-const dotenv = require("dotenv");
-const { z } = require("zod");
+import { z } from "zod";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -26,4 +26,4 @@ const config = configSchema.parse({
   },
 });
 
-module.exports = config;
+export default config;

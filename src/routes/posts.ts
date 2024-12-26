@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 
-const postHandler = require("../controllers/posts");
-const validateData = require("../middlewares/validators");
-const postSchemas = require("../schemas/posts");
+import postHandler from "../controllers/posts";
+import validateData from "../middlewares/validators";
+import postSchemas from "../schemas/posts";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.post(
   postHandler.insert
 );
 
-router.delete("/:id", postHandler.deleteById)
+router.delete("/:id", postHandler.deleteById);
 
 router.put(
   "/:id",
@@ -27,4 +27,4 @@ router.put(
   postHandler.update
 );
 
-module.exports = router;
+export default router;
