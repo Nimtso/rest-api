@@ -10,25 +10,13 @@ import {
 
 const router = express.Router();
 
-router.get(
-  "/",
-  validateData(findCommentSchema),
-  commentHandler.findByFilter.bind(commentHandler)
-);
-router.get("/:id", commentHandler.findById.bind(commentHandler));
+router.get("/", validateData(findCommentSchema), commentHandler.findByFilter);
+router.get("/:id", commentHandler.findById);
 
-router.post(
-  "/",
-  validateData(createCommentSchema),
-  commentHandler.insert.bind(commentHandler)
-);
+router.post("/", validateData(createCommentSchema), commentHandler.insert);
 
-router.delete("/:id", commentHandler.deleteById.bind(commentHandler));
+router.delete("/:id", commentHandler.deleteById);
 
-router.put(
-  "/:id",
-  validateData(updateCommentSchema),
-  commentHandler.update.bind(commentHandler)
-);
+router.put("/:id", validateData(updateCommentSchema), commentHandler.update);
 
 export default router;

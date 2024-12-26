@@ -9,22 +9,22 @@ const router = express.Router();
 router.get(
   "/",
   validateData(postSchemas.findPostSchema),
-  postHandler.findByFilter.bind(postHandler)
+  postHandler.findByFilter
 );
-router.get("/:id", postHandler.findById.bind(postHandler));
+router.get("/:id", postHandler.findById);
 
 router.post(
   "/",
   validateData(postSchemas.createPostSchema),
-  postHandler.insert.bind(postHandler)
+  postHandler.insert
 );
 
-router.delete("/:id", postHandler.deleteById.bind(postHandler));
+router.delete("/:id", postHandler.deleteById);
 
 router.put(
   "/:id",
   validateData(postSchemas.updatePostSchema),
-  postHandler.update.bind(postHandler)
+  postHandler.update
 );
 
 export default router;
