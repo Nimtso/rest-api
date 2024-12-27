@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
-import commentModel from "../db/models/comments";
+import commentModel from "../db/models/comment";
 import type { Request, Response } from "express";
 
 const insert = async (req: Request, res: Response) => {
