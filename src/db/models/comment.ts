@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema({
@@ -6,7 +7,7 @@ const commentSchema = new mongoose.Schema({
     required: true,
   },
   postId: {
-    type: String,
+    type: ObjectId,
     required: true,
   },
   content: String,

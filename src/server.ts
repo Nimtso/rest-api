@@ -8,6 +8,7 @@ import routes from "./routes/index";
 import loggerMiddleware from "./middlewares/logger";
 import { connect as connectMongo } from "./db/utils";
 import config from "./utils/config";
+import swaggerMiddleware from "./middlewares/swagger";
 
 const PORT = config.app.port;
 
@@ -16,7 +17,7 @@ const createServer = () => {
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
+  swaggerMiddleware(app);
   app.use(loggerMiddleware);
   app.use("/", routes);
 
