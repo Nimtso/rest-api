@@ -34,7 +34,7 @@ const router = express.Router();
  *           description: The content of the comment
  *       example:
  *         sender: "User1"
- *         postId: "Post123"
+ *         postId: "677010abb1c9b18015b05760"
  *         content: "This is a comment."
  */
 

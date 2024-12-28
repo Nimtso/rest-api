@@ -3,6 +3,7 @@ import request from "supertest";
 import { createServer } from "../../server";
 import { connectTestDB, disconnectTestDB } from "../setup";
 import commentModel from "../../db/models/comment";
+import { ObjectId } from "mongodb";
 
 const app = createServer();
 
@@ -22,7 +23,7 @@ describe("Comments API (Integration Tests)", () => {
   it("should create a comment", async () => {
     const newComment = {
       sender: "User1",
-      postId: "Post1",
+      postId: new ObjectId().toString(),
       content: "This is a comment.",
     };
 
@@ -37,26 +38,31 @@ describe("Comments API (Integration Tests)", () => {
   });
 
   it("should retrieve a comment by ID", async () => {
-    const comment = await commentModel.create({
+    const comment = {
       sender: "User1",
-      postId: "Post1",
+      postId: new ObjectId().toString(),
       content: "This is a test comment.",
-    });
+    };
+    const insertResult = await commentModel.create(comment);
 
-    const response = await request(app).get(`/comments/${comment._id}`);
+    const response = await request(app).get(`/comments/${insertResult._id}`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({
-      sender: "User1",
-      postId: "Post1",
-      content: "This is a test comment.",
-    });
+    expect(response.body).toMatchObject(comment);
   });
 
   it("should retrieve comments by filter", async () => {
     await commentModel.create([
-      { sender: "User1", postId: "Post1", content: "Comment 1" },
-      { sender: "User2", postId: "Post2", content: "Comment 2" },
+      {
+        sender: "User1",
+        postId: new ObjectId().toString(),
+        content: "Comment 1",
+      },
+      {
+        sender: "User2",
+        postId: new ObjectId().toString(),
+        content: "Comment 2",
+      },
     ]);
 
     const response = await request(app)
@@ -71,7 +77,7 @@ describe("Comments API (Integration Tests)", () => {
   it("should delete a comment by ID", async () => {
     const comment = await commentModel.create({
       sender: "User1",
-      postId: "Post1",
+      postId: new ObjectId().toString(),
       content: "This comment will be deleted.",
     });
 
@@ -87,7 +93,7 @@ describe("Comments API (Integration Tests)", () => {
   it("should update a comment by ID", async () => {
     const comment = {
       sender: "User1",
-      postId: "Post1",
+      postId: new ObjectId().toString(),
       content: "Original Comment",
     };
     const commentDocument = await commentModel.create(comment);
