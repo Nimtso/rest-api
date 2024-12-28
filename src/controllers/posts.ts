@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
 import type { Request, Response } from "express";
 
-import postModel from "../db/models/posts";
+import postModel from "../db/models/post";
 
 const insert = async (req: Request, res: Response) => {
   const post = req.body;
   const result = await postModel.insertMany(post);
-  res.status(StatusCodes.CREATED).send(result);
+  res.status(StatusCodes.CREATED).send(result[0]);
 };
 
 const findById = async (req: Request, res: Response) => {
@@ -41,10 +41,9 @@ const deleteById = async (req: Request, res: Response) => {
 const update = async (req: Request, res: Response) => {
   const id = req.params.id;
   const updateFilter = req.body;
-  const updateResult = await postModel.findOneAndUpdate(
-    { _id: id },
-    updateFilter
-  );
+  const updateResult = await postModel.findByIdAndUpdate(id, updateFilter, {
+    new: true,
+  });
 
   if (!updateResult) {
     res.status(StatusCodes.NOT_FOUND).send(`Cannot find post with id - ${id}`);
