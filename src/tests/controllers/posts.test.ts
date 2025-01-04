@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { connectTestDB, disconnectTestDB } from "../setup";
 import { createServer } from "../../server";
 import postModel from "../../db/models/post";
+import { ObjectId } from "mongodb";
 const app = createServer();
 
 describe("Posts API (Integration Tests)", () => {
@@ -43,7 +44,7 @@ describe("Posts API (Integration Tests)", () => {
 
     const response = await request(app).post("/posts").send(invalidPost);
 
-    expect(response.status).toBe(400); // Validation should fail
+    expect(response.status).toBe(400);
     expect(response.body).toHaveProperty("error");
   });
 
@@ -124,6 +125,16 @@ describe("Posts API (Integration Tests)", () => {
     const updatedPostInDB = await postModel.findById(post._id);
     expect(updatedPostInDB?.title).toBe("Updated Title");
     expect(updatedPostInDB?.content).toBe("Updated Content");
+  });
+
+  it.only("should get 404 for trying to update non existing post", async () => {
+    const response = await request(app)
+      .put(`/posts/${new ObjectId().toString()}`)
+      .send({
+        title: "fakeName",
+      });
+
+    expect(response.status).toBe(404);
   });
 
   it("should return 404 if a post to delete does not exist", async () => {

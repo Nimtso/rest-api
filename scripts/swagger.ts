@@ -4,10 +4,10 @@ swaggerAutogen();
 
 const doc = {
   info: {
-    version: "1.0.0", // by default: '1.0.0'
-    title: "Posts", // by default: 'REST API'
+    version: "1.0.0",
+    title: "Rest-API",
   },
-  host: "localhost:3000", // by default: 'localhost:3000'
+  host: "localhost:3000",
 };
 
 const outputFile = "../swagger.json";

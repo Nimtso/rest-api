@@ -1,222 +1,152 @@
-import bcrypt from "bcrypt";
-import { Document } from "mongoose";
 import jwt from "jsonwebtoken";
-import pick from "lodash/pick";
-import { NextFunction, Request, Response } from "express";
-
-import config from "../utils/config";
-import userModel, { IUser } from "../db/models/user";
+import { NextFunction, Request, response, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-const register = async (req: Request, res: Response) => {
-  try {
-    const password = req.body.password;
-    const user = await userModel.create({
-      email: req.body.email,
-      password,
-    });
+import config from "../utils/config";
+import UserModel, { IUser } from "../db/models/user";
 
-    const returnDto = pick(user, "email");
+const { TOKEN_SECRET, TOKEN_EXPIRES, REFRESH_TOKEN_EXPIRES } = config.auth;
 
-    res.status(200).send(returnDto);
-  } catch (err) {
-    res.status(400).send(err);
-  }
-};
-
-type tTokens = {
-  accessToken: string;
-  refreshToken: string;
-};
-
-export const generateTokens = (userId: string): tTokens | null => {
-  const random = Math.random().toString();
-  const accessToken = jwt.sign(
-    {
-      _id: userId,
-      random: random,
-    },
-    config.auth.TOKEN_SECRET,
-    { expiresIn: config.auth.TOKEN_EXPIRES }
-  );
-
-  const refreshToken = jwt.sign(
-    {
-      _id: userId,
-      random: random,
-    },
-    config.auth.TOKEN_SECRET,
-    { expiresIn: config.auth.REFRESH_TOKEN_EXPIRES }
-  );
-  return {
-    accessToken: accessToken,
-    refreshToken: refreshToken,
-  };
-};
-const login = async (req: Request, res: Response) => {
-  try {
-    const user = await userModel.findOne({ email: req.body.email });
-    if (!user) {
-      res.status(StatusCodes.BAD_REQUEST).send("Invalid Username or Password");
-      return;
-    }
-
-    const validPassword = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
-
-    if (!validPassword) {
-      res.status(StatusCodes.BAD_REQUEST).send("Invalid Username or Password");
-      return;
-    }
-
-    const tokens = generateTokens(user._id);
-    if (!tokens) {
-      res.status(500).send("Server Error");
-      return;
-    }
-    if (!user.refreshToken) {
-      user.refreshToken = [];
-    }
-    user.refreshToken.push(tokens.refreshToken);
-    await user.save();
-    res.status(200).send({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      _id: user._id,
-    });
-  } catch (err) {
-    res.status(400).send(err);
-  }
-};
-
-type tUser = Document<unknown, {}, IUser> &
-  IUser &
-  Required<{
-    _id: string;
-  }> & {
-    __v: number;
-  };
-const verifyRefreshToken = (refreshToken: string | undefined) => {
-  return new Promise<tUser>((resolve, reject) => {
-    //get refresh token from body
-    if (!refreshToken) {
-      reject("fail");
-      return;
-    }
-    //verify token
-    if (!config.auth.TOKEN_SECRET) {
-      reject("fail");
-      return;
-    }
-    jwt.verify(
-      refreshToken,
-      config.auth.TOKEN_SECRET,
-      async (err: any, payload: any) => {
-        if (err) {
-          reject("fail");
-          return;
-        }
-        //get the user id fromn token
-        const userId = payload._id;
-        try {
-          //get the user form the db
-          const user = await userModel.findById(userId);
-          if (!user) {
-            reject("fail");
-            return;
-          }
-          if (!user.refreshToken || !user.refreshToken.includes(refreshToken)) {
-            user.refreshToken = [];
-            await user.save();
-            reject("fail");
-            return;
-          }
-          const tokens = user.refreshToken!.filter(
-            (token) => token !== refreshToken
-          );
-          user.refreshToken = tokens;
-
-          resolve(user);
-        } catch (err) {
-          reject("fail");
-          return;
-        }
-      }
-    );
+const generateAccessToken = (user: IUser): string => {
+  return jwt.sign({ _id: user._id, email: user.email }, TOKEN_SECRET, {
+    expiresIn: TOKEN_EXPIRES,
   });
 };
 
-const logout = async (req: Request, res: Response) => {
-  try {
-    const user = await verifyRefreshToken(req.body.refreshToken);
-    await user.save();
-    res.status(200).send("success");
-  } catch (err) {
-    res.status(400).send("fail");
-  }
+const generateRefreshToken = (user: IUser): string => {
+  return jwt.sign({ _id: user._id, email: user.email }, TOKEN_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES,
+  });
 };
 
-const refresh = async (req: Request, res: Response) => {
-  try {
-    const user = await verifyRefreshToken(req.body.refreshToken);
-    if (!user) {
-      res.status(400).send("fail");
-      return;
-    }
-    const tokens = generateToken(user._id);
+const register = async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body;
 
-    if (!tokens) {
-      res.status(500).send("Server Error");
-      return;
-    }
-    if (!user.refreshToken) {
-      user.refreshToken = [];
-    }
-    user.refreshToken.push(tokens.refreshToken);
-    await user.save();
-    res.status(200).send({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      _id: user._id,
-    });
-    //send new token
-  } catch (err) {
-    res.status(400).send("fail");
-  }
-};
-
-type Payload = {
-  _id: string;
-};
-
-export const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const authorization = req.header("authorization");
-  const token = authorization && authorization.split(" ")[1];
-
-  if (!token) {
-    res.status(401).send("Access Denied");
+  const existingUser = await UserModel.findOne({ email });
+  if (existingUser) {
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: "User already exists" });
     return;
   }
 
-  jwt.verify(token, config.auth.TOKEN_SECRET, (err, payload) => {
-    if (err) {
-      res.status(401).send("Access Denied");
-      return;
-    }
-    req.params.userId = (payload as Payload)._id;
-    next();
+  const newUser = new UserModel({ email, password });
+  await newUser.save();
+
+  res.status(StatusCodes.CREATED).json({
+    message: "User registered successfully",
+    user: { email: newUser.email, _id: newUser._id },
   });
 };
 
-export default {
-  register,
-  login,
-  refresh,
-  logout,
+const login = async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body;
+
+  const user = await UserModel.findOne({ email });
+  if (!user) {
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: "Invalid credentials" });
+    return;
+  }
+
+  const isValidPassword = await user.isValidPassword(password);
+  if (!isValidPassword) {
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: "Invalid credentials" });
+    return;
+  }
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  user.refreshToken.push(refreshToken);
+  await user.save();
+
+  res.status(StatusCodes.OK).json({ accessToken, refreshToken, _id: user._id });
 };
+
+const refresh = async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: "Refresh token is required" });
+    return;
+  }
+
+  try {
+    const { refreshToken } = req.body;
+    const decoded = jwt.verify(refreshToken, TOKEN_SECRET) as jwt.JwtPayload;
+
+    const user = await UserModel.findById(decoded._id);
+    if (!user || !user.refreshToken.includes(refreshToken)) {
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "Invalid refresh token" });
+      return;
+    }
+
+    const newAccessToken = jwt.sign(
+      { _id: user._id, email: user.email },
+      TOKEN_SECRET,
+      { expiresIn: config.auth.TOKEN_EXPIRES }
+    );
+    const newRefreshToken = jwt.sign(
+      { _id: user._id, email: user.email },
+      TOKEN_SECRET,
+      { expiresIn: config.auth.REFRESH_TOKEN_EXPIRES }
+    );
+
+    user.refreshToken = user.refreshToken.filter(
+      (token) => token !== refreshToken
+    );
+    user.refreshToken.push(newRefreshToken);
+    await user.save();
+
+    res
+      .status(StatusCodes.OK)
+      .json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "Refresh token has expired" });
+      return;
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "Invalid refresh token" });
+      return;
+    }
+
+    throw error;
+  }
+};
+
+const logout = async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken } = req.body;
+
+  const user = await UserModel.findOne({
+    refreshToken: { $in: [refreshToken] },
+  });
+
+  if (!user) {
+    res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: "Invalid refresh token" });
+    return;
+  }
+
+  user.refreshToken = user.refreshToken.filter(
+    (token: string) => token !== refreshToken
+  );
+  await user.save();
+
+  res.status(StatusCodes.OK).json({ message: "Logout successful" });
+};
+
+export default { logout, register, login, refresh };

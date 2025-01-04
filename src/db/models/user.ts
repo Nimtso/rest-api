@@ -1,15 +1,14 @@
-import mongoose from "mongoose";
-
+import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
-export interface IUser {
+export interface IUser extends Document {
   email: string;
   password: string;
-  _id?: string;
-  refreshToken?: string[];
+  refreshToken: string[];
+  isValidPassword(password: string): Promise<boolean>;
 }
 
-const userSchema = new mongoose.Schema<IUser>({
+const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
@@ -31,7 +30,9 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.isValidPassword = async function (password: string) {
+userSchema.methods.isValidPassword = async function (
+  password: string
+): Promise<boolean> {
   return bcrypt.compare(password, this.password);
 };
 

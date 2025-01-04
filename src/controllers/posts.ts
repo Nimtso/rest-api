@@ -41,16 +41,22 @@ const deleteById = async (req: Request, res: Response) => {
 const update = async (req: Request, res: Response) => {
   const id = req.params.id;
   const updateFilter = req.body;
-  const updateResult = await postModel.findByIdAndUpdate(id, updateFilter, {
-    new: true,
-  });
 
-  if (!updateResult) {
-    res.status(StatusCodes.NOT_FOUND).send(`Cannot find post with id - ${id}`);
-    return;
+  try {
+    const updateResult = await postModel.findByIdAndUpdate(id, updateFilter, {
+      new: true,
+    });
+
+    if (!updateResult) {
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .send(`Cannot find post with id - ${id}`);
+      return;
+    }
+    res.status(StatusCodes.OK).send(updateResult);
+  } catch (err) {
+    throw err;
   }
-
-  res.status(StatusCodes.OK).send(updateResult);
 };
 
 export default { findAll, findById, findByFilter, deleteById, update, insert };

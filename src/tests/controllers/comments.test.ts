@@ -17,7 +17,7 @@ describe("Comments API (Integration Tests)", () => {
   });
 
   beforeEach(async () => {
-    await commentModel.deleteMany(); // Clear the collection before each test
+    await commentModel.deleteMany();
   });
 
   it("should create a comment", async () => {
