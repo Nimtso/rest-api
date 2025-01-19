@@ -76,7 +76,7 @@ const router = express.Router();
 router.get(
   "/",
   validateData(postSchemas.findPostSchema),
-  postHandler.findByFilter
+  postHandler.findByFilter.bind(postHandler)
 );
 
 /**
@@ -102,7 +102,7 @@ router.get(
  *       404:
  *         description: Post not found
  */
-router.get("/:id", postHandler.findById);
+router.get("/:id", postHandler.findById.bind(postHandler));
 
 /**
  * @swagger
@@ -127,7 +127,7 @@ router.get("/:id", postHandler.findById);
 router.post(
   "/",
   validateData(postSchemas.createPostSchema),
-  postHandler.insert
+  postHandler.insert.bind(postHandler)
 );
 
 /**
@@ -149,7 +149,7 @@ router.post(
  *       404:
  *         description: Post not found
  */
-router.delete("/:id", postHandler.deleteById);
+router.delete("/:id", postHandler.deleteById.bind(postHandler));
 
 /**
  * @swagger
@@ -183,7 +183,7 @@ router.delete("/:id", postHandler.deleteById);
 router.put(
   "/:id",
   validateData(postSchemas.updatePostSchema),
-  postHandler.update
+  postHandler.update.bind(postHandler)
 );
 
 export default router;

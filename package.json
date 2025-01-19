@@ -6,7 +6,7 @@
     "start": "tsc && node ./dist/index.js",
     "start:dev": "nodemon ./index.ts",
     "swagger-autogen": "node ./scripts/swagger.js",
-    "test": "jest --coverage"
+    "test": "jest --coverage --verbose"
   },
   "author": "",
   "license": "ISC",

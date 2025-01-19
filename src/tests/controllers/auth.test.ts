@@ -28,6 +28,7 @@ describe("Auth API (Integration Tests)", () => {
     const newUser = {
       email: "test@example.com",
       password: "password123",
+      name: "Test User",
     };
 
     const response = await request(app).post("/auth/register").send(newUser);
@@ -47,11 +48,13 @@ describe("Auth API (Integration Tests)", () => {
     await UserModel.create({
       email: "test@example.com",
       password: "password123",
+      name: "Test User",
     });
 
     const response = await request(app).post("/auth/register").send({
       email: "test@example.com",
       password: "password123",
+      name: "Another User",
     });
 
     expect(response.status).toBe(400);
@@ -62,6 +65,7 @@ describe("Auth API (Integration Tests)", () => {
     const user = new UserModel({
       email: "test@example.com",
       password: "password123",
+      name: "Test User",
     });
     await user.save();
 
@@ -83,6 +87,7 @@ describe("Auth API (Integration Tests)", () => {
     await UserModel.create({
       email: "test@example.com",
       password: "password123",
+      name: "Test User",
     });
 
     const response = await request(app).post("/auth/login").send({
@@ -98,6 +103,7 @@ describe("Auth API (Integration Tests)", () => {
     const user = new UserModel({
       email: "test@example.com",
       password: "password123",
+      name: "Test User",
     });
     await user.save();
 
@@ -134,6 +140,7 @@ describe("Auth API (Integration Tests)", () => {
     const user = new UserModel({
       email: "test@example.com",
       password: "password123",
+      name: "Test User",
     });
     await user.save();
 

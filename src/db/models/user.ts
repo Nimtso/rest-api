@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 export interface IUser extends Document {
   email: string;
   password: string;
+  name: string;
   refreshToken: string[];
   isValidPassword(password: string): Promise<boolean>;
 }
@@ -15,6 +16,10 @@ const userSchema = new Schema<IUser>({
     unique: true,
   },
   password: {
+    type: String,
+    required: true,
+  },
+  name: {
     type: String,
     required: true,
   },

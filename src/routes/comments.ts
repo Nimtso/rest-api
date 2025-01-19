@@ -74,7 +74,11 @@ const router = express.Router();
  *               items:
  *                 $ref: '#/components/schemas/Comment'
  */
-router.get("/", validateData(findCommentSchema), commentHandler.findByFilter);
+router.get(
+  "/",
+  validateData(findCommentSchema),
+  commentHandler.findByFilter.bind(commentHandler)
+);
 
 /**
  * @swagger
@@ -99,7 +103,7 @@ router.get("/", validateData(findCommentSchema), commentHandler.findByFilter);
  *       404:
  *         description: Comment not found
  */
-router.get("/:id", commentHandler.findById);
+router.get("/:id", commentHandler.findById.bind(commentHandler));
 
 /**
  * @swagger
@@ -121,7 +125,11 @@ router.get("/:id", commentHandler.findById);
  *             schema:
  *               $ref: '#/components/schemas/Comment'
  */
-router.post("/", validateData(createCommentSchema), commentHandler.insert);
+router.post(
+  "/",
+  validateData(createCommentSchema),
+  commentHandler.insert.bind(commentHandler)
+);
 
 /**
  * @swagger
@@ -142,7 +150,7 @@ router.post("/", validateData(createCommentSchema), commentHandler.insert);
  *       404:
  *         description: Comment not found
  */
-router.delete("/:id", commentHandler.deleteById);
+router.delete("/:id", commentHandler.deleteById.bind(commentHandler));
 
 /**
  * @swagger
@@ -173,6 +181,10 @@ router.delete("/:id", commentHandler.deleteById);
  *       404:
  *         description: Comment not found
  */
-router.put("/:id", validateData(updateCommentSchema), commentHandler.update);
+router.put(
+  "/:id",
+  validateData(updateCommentSchema),
+  commentHandler.update.bind(commentHandler)
+);
 
 export default router;

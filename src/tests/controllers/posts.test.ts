@@ -30,9 +30,9 @@ describe("Posts API (Integration Tests)", () => {
     const response = await request(app).post("/posts").send(newPost);
 
     expect(response.status).toBe(201);
-    expect(response.body).toMatchObject(newPost);
+    expect(response.body[0]).toMatchObject(newPost);
 
-    const postInDB = await postModel.findById(response.body._id);
+    const postInDB = await postModel.findById(response.body[0]._id);
     expect(postInDB).toBeTruthy();
     expect(postInDB?.title).toBe("Sample Title");
   });
@@ -93,7 +93,7 @@ describe("Posts API (Integration Tests)", () => {
     const response = await request(app).delete(`/posts/${post._id}`);
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe("Post Deleted");
+    expect(response.text).toBe("Item deleted");
 
     const postInDB = await postModel.findById(post._id);
     expect(postInDB).toBeNull();
@@ -127,7 +127,7 @@ describe("Posts API (Integration Tests)", () => {
     expect(updatedPostInDB?.content).toBe("Updated Content");
   });
 
-  it.only("should get 404 for trying to update non existing post", async () => {
+  it("should get 404 for trying to update non existing post", async () => {
     const response = await request(app)
       .put(`/posts/${new ObjectId().toString()}`)
       .send({
@@ -143,6 +143,6 @@ describe("Posts API (Integration Tests)", () => {
     const response = await request(app).delete(`/posts/${nonExistentId}`);
 
     expect(response.status).toBe(404);
-    expect(response.text).toBe("Cannot find post");
+    expect(response.text).toBe("Cannot find item");
   });
 });

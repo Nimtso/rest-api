@@ -30,9 +30,9 @@ describe("Comments API (Integration Tests)", () => {
     const response = await request(app).post("/comments").send(newComment);
 
     expect(response.status).toBe(201);
-    expect(response.body).toMatchObject(newComment);
+    expect(response.body[0]).toMatchObject(newComment);
 
-    const commentInDB = await commentModel.findById(response.body._id);
+    const commentInDB = await commentModel.findById(response.body[0]._id);
     expect(commentInDB).toBeTruthy();
     expect(commentInDB?.sender).toBe("User1");
   });
@@ -84,7 +84,7 @@ describe("Comments API (Integration Tests)", () => {
     const response = await request(app).delete(`/comments/${comment._id}`);
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe("Comment Deleted");
+    expect(response.text).toBe("Item deleted");
 
     const commentInDB = await commentModel.findById(comment._id);
     expect(commentInDB).toBeNull();
@@ -103,7 +103,10 @@ describe("Comments API (Integration Tests)", () => {
       .send({ ...comment, content: "Updated Comment" });
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe("Comment Updated");
+    expect(response.body).toMatchObject({
+      ...comment,
+      content: "Updated Comment",
+    });
 
     const updatedCommentInDB = await commentModel.findById(commentDocument._id);
     expect(updatedCommentInDB?.content).toBe("Updated Comment");

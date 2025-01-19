@@ -20,7 +20,7 @@ const generateRefreshToken = (user: IUser): string => {
 };
 
 const register = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
 
   const existingUser = await UserModel.findOne({ email });
   if (existingUser) {
@@ -30,12 +30,12 @@ const register = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const newUser = new UserModel({ email, password });
+  const newUser = new UserModel({ email, password, name });
   await newUser.save();
 
   res.status(StatusCodes.CREATED).json({
     message: "User registered successfully",
-    user: { email: newUser.email, _id: newUser._id },
+    user: { email: newUser.email, _id: newUser._id, name: newUser.name },
   });
 };
 
