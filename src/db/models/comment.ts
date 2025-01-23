@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import { Comment } from "../../types/comments";
 
-const commentSchema = new mongoose.Schema<Comment>({
+const commentSchema = new mongoose.Schema({
   sender: {
     type: String,
     required: true,
@@ -13,6 +12,6 @@ const commentSchema = new mongoose.Schema<Comment>({
   content: String,
 });
 
-const commentModel = mongoose.model<Comment>("Comments", commentSchema);
+const commentModel = mongoose.model("Comments", commentSchema);
 
 export default commentModel;

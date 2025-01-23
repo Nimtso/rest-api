@@ -40,7 +40,7 @@ class BaseController<T> {
       return;
     }
 
-    res.send("item Deleted");
+    res.send("Item deleted");
   }
 
   async update(req: Request, res: Response) {
@@ -48,13 +48,12 @@ class BaseController<T> {
     const updateFilter = req.body;
     const updateResult = await this.model.findOneAndUpdate(
       { _id: id },
-      updateFilter
+      updateFilter,
+      { new: true }
     );
 
     if (!updateResult) {
-      res
-        .status(StatusCodes.NOT_FOUND)
-        .send(`Cannot find item with id - ${id}`);
+      res.status(StatusCodes.NOT_FOUND).send(`Cannot find item`);
       return;
     }
 

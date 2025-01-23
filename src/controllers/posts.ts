@@ -1,4 +1,4 @@
-import postModel from "../db/models/posts";
+import postModel from "../db/models/post";
 import BaseController from "./base";
 
 const postsController = new BaseController(postModel);
