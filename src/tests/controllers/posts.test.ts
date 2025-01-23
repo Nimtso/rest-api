@@ -1,11 +1,19 @@
 import request from "supertest";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
 import { connectTestDB, disconnectTestDB } from "../setup";
 import { createServer } from "../../server";
 import postModel from "../../db/models/post";
 import { ObjectId } from "mongodb";
+import config from "../../utils/config";
+
 const app = createServer();
+
+const mockUserId = new mongoose.Types.ObjectId();
+const mockToken = jwt.sign({ _id: mockUserId }, config.auth.TOKEN_SECRET, {
+  expiresIn: "1h",
+});
 
 describe("Posts API (Integration Tests)", () => {
   beforeAll(async () => {
@@ -27,7 +35,10 @@ describe("Posts API (Integration Tests)", () => {
       sender: "User1",
     };
 
-    const response = await request(app).post("/posts").send(newPost);
+    const response = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${mockToken}`)
+      .send(newPost);
 
     expect(response.status).toBe(201);
     expect(response.body[0]).toMatchObject(newPost);
@@ -42,7 +53,10 @@ describe("Posts API (Integration Tests)", () => {
       content: "Missing Title",
     };
 
-    const response = await request(app).post("/posts").send(invalidPost);
+    const response = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${mockToken}`)
+      .send(invalidPost);
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty("error");
@@ -55,7 +69,9 @@ describe("Posts API (Integration Tests)", () => {
       sender: "User1",
     });
 
-    const response = await request(app).get(`/posts/${post._id}`);
+    const response = await request(app)
+      .get(`/posts/${post._id}`)
+      .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -73,7 +89,8 @@ describe("Posts API (Integration Tests)", () => {
 
     const response = await request(app)
       .get("/posts")
-      .query({ sender: "User1" });
+      .query({ sender: "User1" })
+      .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
     expect(response.body.length).toBe(1);
@@ -90,7 +107,9 @@ describe("Posts API (Integration Tests)", () => {
       sender: "User1",
     });
 
-    const response = await request(app).delete(`/posts/${post._id}`);
+    const response = await request(app)
+      .delete(`/posts/${post._id}`)
+      .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
     expect(response.text).toBe("Item deleted");
@@ -113,6 +132,7 @@ describe("Posts API (Integration Tests)", () => {
 
     const response = await request(app)
       .put(`/posts/${post._id}`)
+      .set("Authorization", `Bearer ${mockToken}`)
       .send(updatedPost);
 
     expect(response.status).toBe(200);
@@ -127,9 +147,10 @@ describe("Posts API (Integration Tests)", () => {
     expect(updatedPostInDB?.content).toBe("Updated Content");
   });
 
-  it("should get 404 for trying to update non existing post", async () => {
+  it("should get 404 for trying to update non-existing post", async () => {
     const response = await request(app)
       .put(`/posts/${new ObjectId().toString()}`)
+      .set("Authorization", `Bearer ${mockToken}`)
       .send({
         title: "fakeName",
       });
@@ -140,7 +161,9 @@ describe("Posts API (Integration Tests)", () => {
   it("should return 404 if a post to delete does not exist", async () => {
     const nonExistentId = new mongoose.Types.ObjectId();
 
-    const response = await request(app).delete(`/posts/${nonExistentId}`);
+    const response = await request(app)
+      .delete(`/posts/${nonExistentId}`)
+      .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(404);
     expect(response.text).toBe("Cannot find item");

@@ -2,6 +2,7 @@ import express from "express";
 import postHandler from "../controllers/posts";
 import validateData from "../middlewares/validators";
 import postSchemas from "../schemas/posts";
+import { authMiddleware } from "../middlewares/auth";
 
 const router = express.Router();
 
@@ -29,6 +30,13 @@ const router = express.Router();
  *         title: "Sample Post"
  *         content: "This is the content of the post."
  *         sender: "User1"
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ * security:
+ *   - bearerAuth: []
  */
 
 /**
@@ -110,6 +118,8 @@ router.get("/:id", postHandler.findById.bind(postHandler));
  *   post:
  *     summary: Create a new post
  *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -123,9 +133,12 @@ router.get("/:id", postHandler.findById.bind(postHandler));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Post'
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
  */
 router.post(
   "/",
+  authMiddleware,
   validateData(postSchemas.createPostSchema),
   postHandler.insert.bind(postHandler)
 );
@@ -136,6 +149,8 @@ router.post(
  *   delete:
  *     summary: Delete a post by ID
  *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -146,10 +161,12 @@ router.post(
  *     responses:
  *       200:
  *         description: Post deleted successfully
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
  *       404:
  *         description: Post not found
  */
-router.delete("/:id", postHandler.deleteById.bind(postHandler));
+router.delete("/:id", authMiddleware, postHandler.deleteById.bind(postHandler));
 
 /**
  * @swagger
@@ -157,6 +174,8 @@ router.delete("/:id", postHandler.deleteById.bind(postHandler));
  *   put:
  *     summary: Update a post by ID
  *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -177,11 +196,14 @@ router.delete("/:id", postHandler.deleteById.bind(postHandler));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Post'
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
  *       404:
  *         description: Post not found
  */
 router.put(
   "/:id",
+  authMiddleware,
   validateData(postSchemas.updatePostSchema),
   postHandler.update.bind(postHandler)
 );

@@ -1,6 +1,7 @@
 import express from "express";
 import commentHandler from "../controllers/comments";
 import validateData from "../middlewares/validators";
+import { authMiddleware } from "../middlewares/auth";
 import {
   createCommentSchema,
   findCommentSchema,
@@ -36,6 +37,13 @@ const router = express.Router();
  *         sender: "User1"
  *         postId: "677010abb1c9b18015b05760"
  *         content: "This is a comment."
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ * security:
+ *   - bearerAuth: []
  */
 
 /**
@@ -111,6 +119,8 @@ router.get("/:id", commentHandler.findById.bind(commentHandler));
  *   post:
  *     summary: Create a new comment
  *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -124,9 +134,12 @@ router.get("/:id", commentHandler.findById.bind(commentHandler));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Comment'
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
  */
 router.post(
   "/",
+  authMiddleware,
   validateData(createCommentSchema),
   commentHandler.insert.bind(commentHandler)
 );
@@ -137,6 +150,8 @@ router.post(
  *   delete:
  *     summary: Delete a comment by ID
  *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -147,10 +162,16 @@ router.post(
  *     responses:
  *       200:
  *         description: Comment deleted successfully
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
  *       404:
  *         description: Comment not found
  */
-router.delete("/:id", commentHandler.deleteById.bind(commentHandler));
+router.delete(
+  "/:id",
+  authMiddleware,
+  commentHandler.deleteById.bind(commentHandler)
+);
 
 /**
  * @swagger
@@ -158,6 +179,8 @@ router.delete("/:id", commentHandler.deleteById.bind(commentHandler));
  *   put:
  *     summary: Update a comment by ID
  *     tags: [Comments]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -178,11 +201,14 @@ router.delete("/:id", commentHandler.deleteById.bind(commentHandler));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Comment'
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
  *       404:
  *         description: Comment not found
  */
 router.put(
   "/:id",
+  authMiddleware,
   validateData(updateCommentSchema),
   commentHandler.update.bind(commentHandler)
 );

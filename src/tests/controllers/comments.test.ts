@@ -1,11 +1,17 @@
 import request from "supertest";
+import jwt from "jsonwebtoken";
 
 import { createServer } from "../../server";
 import { connectTestDB, disconnectTestDB } from "../setup";
 import commentModel from "../../db/models/comment";
 import { ObjectId } from "mongodb";
+import config from "../../utils/config";
 
 const app = createServer();
+const mockUserId = new ObjectId();
+const mockToken = jwt.sign({ _id: mockUserId }, config.auth.TOKEN_SECRET, {
+  expiresIn: "1h",
+});
 
 describe("Comments API (Integration Tests)", () => {
   beforeAll(async () => {
@@ -27,7 +33,10 @@ describe("Comments API (Integration Tests)", () => {
       content: "This is a comment.",
     };
 
-    const response = await request(app).post("/comments").send(newComment);
+    const response = await request(app)
+      .post("/comments")
+      .set("Authorization", `Bearer ${mockToken}`)
+      .send(newComment);
 
     expect(response.status).toBe(201);
     expect(response.body[0]).toMatchObject(newComment);
@@ -81,7 +90,9 @@ describe("Comments API (Integration Tests)", () => {
       content: "This comment will be deleted.",
     });
 
-    const response = await request(app).delete(`/comments/${comment._id}`);
+    const response = await request(app)
+      .delete(`/comments/${comment._id}`)
+      .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
     expect(response.text).toBe("Item deleted");
@@ -100,6 +111,7 @@ describe("Comments API (Integration Tests)", () => {
 
     const response = await request(app)
       .put(`/comments/${commentDocument._id}`)
+      .set("Authorization", `Bearer ${mockToken}`)
       .send({ ...comment, content: "Updated Comment" });
 
     expect(response.status).toBe(200);
@@ -110,5 +122,31 @@ describe("Comments API (Integration Tests)", () => {
 
     const updatedCommentInDB = await commentModel.findById(commentDocument._id);
     expect(updatedCommentInDB?.content).toBe("Updated Comment");
+  });
+
+  it("should not create a comment without a valid token", async () => {
+    const newComment = {
+      sender: "User1",
+      postId: new ObjectId().toString(),
+      content: "This is a comment.",
+    };
+
+    const response = await request(app).post("/comments").send(newComment);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe("Access Denied: No Token Provided");
+  });
+
+  it("should not delete a comment without a valid token", async () => {
+    const comment = await commentModel.create({
+      sender: "User1",
+      postId: new ObjectId().toString(),
+      content: "This comment will be deleted.",
+    });
+
+    const response = await request(app).delete(`/comments/${comment._id}`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe("Access Denied: No Token Provided");
   });
 });
