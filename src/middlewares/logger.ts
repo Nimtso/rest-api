@@ -1,6 +1,5 @@
-const morgan = require("morgan");
-
-const logger = require("../utils/logger");
+import morgan from "morgan";
+import logger from "../utils/logger";
 
 const morganMiddleware = morgan(
   ":method :url :status :res[content-length] - :response-time ms",
@@ -11,4 +10,4 @@ const morganMiddleware = morgan(
   }
 );
 
-module.exports = morganMiddleware;
+export default morganMiddleware;

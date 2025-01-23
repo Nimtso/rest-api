@@ -1,4 +1,4 @@
-const { z } = require("zod");
+import { z } from "zod";
 
 const findPostSchema = {
   query: z
@@ -31,4 +31,4 @@ const updatePostSchema = {
     .strict(),
 };
 
-module.exports = { findPostSchema, createPostSchema, updatePostSchema };
+export default { findPostSchema, createPostSchema, updatePostSchema };
