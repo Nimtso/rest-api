@@ -26,10 +26,14 @@ const router = express.Router();
  *         sender:
  *           type: string
  *           description: The sender of the post
+ *          imageUrl:
+ *            type: string
+ *            description: The image URL of the post
  *       example:
  *         title: "Sample Post"
  *         content: "This is the content of the post."
  *         sender: "User1"
+ *         imageUrl: "https://example.com/image.jpg"
  *   securitySchemes:
  *     bearerAuth:
  *       type: http

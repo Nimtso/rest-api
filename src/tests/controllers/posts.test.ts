@@ -33,6 +33,7 @@ describe("Posts API (Integration Tests)", () => {
       title: "Sample Title",
       content: "This is sample content.",
       sender: "User1",
+      imageUrl: "https://example.com/image.jpg",
     };
 
     const response = await request(app)
@@ -67,6 +68,7 @@ describe("Posts API (Integration Tests)", () => {
       title: "Sample Title",
       content: "Sample Content",
       sender: "User1",
+      imageUrl: "https://example.com/image.jpg",
     });
 
     const response = await request(app)
@@ -83,8 +85,18 @@ describe("Posts API (Integration Tests)", () => {
 
   it("should retrieve posts by filter", async () => {
     await postModel.create([
-      { title: "Title 1", content: "Content 1", sender: "User1" },
-      { title: "Title 2", content: "Content 2", sender: "User2" },
+      {
+        title: "Title 1",
+        content: "Content 1",
+        sender: "User1",
+        imageUrl: "https://example.com/image1.jpg",
+      },
+      {
+        title: "Title 2",
+        content: "Content 2",
+        sender: "User2",
+        imageUrl: "https://example.com/image2.jpg",
+      },
     ]);
 
     const response = await request(app)
@@ -105,6 +117,7 @@ describe("Posts API (Integration Tests)", () => {
       title: "To Be Deleted",
       content: "Content",
       sender: "User1",
+      imageUrl: "https://example.com/image.jpg",
     });
 
     const response = await request(app)
@@ -123,6 +136,7 @@ describe("Posts API (Integration Tests)", () => {
       title: "Original Title",
       content: "Original Content",
       sender: "User1",
+      imageUrl: "https://example.com/image.jpg",
     });
 
     const updatedPost = {

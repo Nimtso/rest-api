@@ -5,8 +5,15 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  content: String,
+  content: {
+    type: String,
+    required: true,
+  },
   sender: {
+    type: String,
+    required: true,
+  },
+  imageUrl: {
     type: String,
     required: true,
   },
