@@ -1,8 +1,11 @@
 import express from "express";
+
 import postHandler from "../controllers/posts";
 import validateData from "../middlewares/validators";
 import postSchemas from "../schemas/posts";
 import { authMiddleware } from "../middlewares/auth";
+import uploadMiddleware from "../middlewares/multer";
+import config from "../utils/config";
 
 const router = express.Router();
 
@@ -26,9 +29,9 @@ const router = express.Router();
  *         sender:
  *           type: string
  *           description: The sender of the post
- *          imageUrl:
- *            type: string
- *            description: The image URL of the post
+ *         imageUrl:
+ *           type: string
+ *           description: The image URL of the post
  *       example:
  *         title: "Sample Post"
  *         content: "This is the content of the post."
@@ -210,6 +213,53 @@ router.put(
   authMiddleware,
   validateData(postSchemas.updatePostSchema),
   postHandler.update.bind(postHandler)
+);
+
+/**
+ * @swagger
+ * /posts/image:
+ *   post:
+ *     summary: Upload an image for a post
+ *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The image file to upload
+ *     responses:
+ *       200:
+ *         description: Image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *                   description: URL of the uploaded image
+ *       400:
+ *         description: Bad request - No file uploaded
+ *       401:
+ *         description: Unauthorized - Access token is missing or invalid
+ */
+
+router.post(
+  "/image",
+  authMiddleware,
+  uploadMiddleware,
+  validateData(postSchemas.uploadPostImageSchema),
+  (req, res) => {
+    const domain = config.app.domainBase + ":" + config.app.port;
+    res.status(200).send({ url: domain + "/" + req.file?.path });
+  }
 );
 
 export default router;

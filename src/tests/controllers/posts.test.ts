@@ -1,6 +1,8 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import path from "path";
+import fs from "fs";
 
 import { connectTestDB, disconnectTestDB } from "../setup";
 import { createServer } from "../../server";
@@ -181,5 +183,42 @@ describe("Posts API (Integration Tests)", () => {
 
     expect(response.status).toBe(404);
     expect(response.text).toBe("Cannot find item");
+  });
+
+  describe("Upload post image", () => {
+    const testImagePath = path.join(__dirname, "test-image.jpg");
+
+    beforeAll(() => {
+      if (!fs.existsSync(testImagePath)) {
+        fs.writeFileSync(testImagePath, "dummy image content");
+      }
+    });
+
+    afterAll(() => {
+      const imagePath = path.join(__dirname, "test-image.jpg");
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    });
+
+    it("should upload an image successfully", async () => {
+      const response = await request(app)
+        .post("/posts/image")
+        .set("Authorization", `Bearer ${mockToken}`)
+        .attach("file", testImagePath);
+
+      expect(response.status).toBe(200);
+      const { url } = response.body;
+      expect(url).toContain(config.database.storage);
+    });
+
+    it("should return 400 if no file is uploaded", async () => {
+      const response = await request(app)
+        .post("/posts/image")
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty("error");
+    });
   });
 });

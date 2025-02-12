@@ -20,6 +20,7 @@ const createServer = () => {
   swaggerMiddleware(app);
   app.use(loggerMiddleware);
   app.use("/", routes);
+  app.use("/storage", express.static("storage"));
 
   return app;
 };

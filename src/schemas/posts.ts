@@ -32,4 +32,13 @@ const updatePostSchema = {
     .strict(),
 };
 
-export default { findPostSchema, createPostSchema, updatePostSchema };
+const uploadPostImageSchema = {
+  file: z.object({}),
+};
+
+export default {
+  findPostSchema,
+  createPostSchema,
+  updatePostSchema,
+  uploadPostImageSchema,
+};

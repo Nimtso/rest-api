@@ -11,7 +11,7 @@ const levels = {
 
 const level = () => {
   const env = config.app.env;
-  const isDevelopment = env === "development";
+  const isDevelopment = env === "dev";
   return isDevelopment ? "debug" : "error";
 };
 
