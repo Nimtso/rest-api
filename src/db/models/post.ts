@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+import { Post } from "../../types/posts";
 
-const postSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema<Post>({
   title: {
     type: String,
     required: true,

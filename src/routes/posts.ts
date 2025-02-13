@@ -256,10 +256,7 @@ router.post(
   authMiddleware,
   uploadMiddleware,
   validateData(postSchemas.uploadPostImageSchema),
-  (req, res) => {
-    const domain = config.app.domainBase + ":" + config.app.port;
-    res.status(200).send({ url: domain + "/" + req.file?.path });
-  }
+  postHandler.uploadPostImage.bind(postHandler)
 );
 
 export default router;

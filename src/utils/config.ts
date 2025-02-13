@@ -7,7 +7,7 @@ const envFile =
     ? ".env"
     : `.${process.env.NODE_ENV}.env`;
 
-dotenv.config({ path: path.resolve(__dirname, "../../", envFile) });
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
 const configSchema = z.object({
   app: z.object({

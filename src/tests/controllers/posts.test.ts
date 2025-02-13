@@ -1,8 +1,9 @@
+import fs from "fs";
+import path from "path";
+import jwt from "jsonwebtoken";
 import request from "supertest";
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import path from "path";
-import fs from "fs";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { connectTestDB, disconnectTestDB } from "../setup";
 import { createServer } from "../../server";
@@ -12,6 +13,7 @@ import config from "../../utils/config";
 
 const app = createServer();
 
+jest.mock("@google/generative-ai");
 const mockUserId = new mongoose.Types.ObjectId();
 const mockToken = jwt.sign({ _id: mockUserId }, config.auth.TOKEN_SECRET, {
   expiresIn: "1h",
@@ -187,8 +189,20 @@ describe("Posts API (Integration Tests)", () => {
 
   describe("Upload post image", () => {
     const testImagePath = path.join(__dirname, "test-image.jpg");
+    const mockResponse = { title: "mocked title", content: "mocked content" };
 
     beforeAll(() => {
+      (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
+        getGenerativeModel: jest.fn().mockReturnValue({
+          generateContent: jest.fn().mockResolvedValue({
+            response: {
+              text: () =>
+                `Title: ${mockResponse.title}\nContent: ${mockResponse.content}`,
+            },
+          }),
+        }),
+      }));
+
       if (!fs.existsSync(testImagePath)) {
         fs.writeFileSync(testImagePath, "dummy image content");
       }
@@ -208,8 +222,10 @@ describe("Posts API (Integration Tests)", () => {
         .attach("file", testImagePath);
 
       expect(response.status).toBe(200);
-      const { url } = response.body;
+      const { url, title, content } = response.body;
       expect(url).toContain(config.database.storage);
+      expect(title).toBe(mockResponse.title);
+      expect(content).toBe(mockResponse.content);
     });
 
     it("should return 400 if no file is uploaded", async () => {
