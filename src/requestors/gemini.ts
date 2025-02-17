@@ -1,8 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs";
 import Logger from "../utils/logger";
+import config from "../utils/config";
 
-const API_KEY = "";
+const API_KEY = config.auth.GEMINI_API_KEY;
 
 const prompt = `
   Analyze this image and generate:

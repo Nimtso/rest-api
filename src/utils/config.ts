@@ -23,6 +23,7 @@ const configSchema = z.object({
     TOKEN_SECRET: z.string().min(1),
     TOKEN_EXPIRES: z.string().min(1),
     REFRESH_TOKEN_EXPIRES: z.string().min(1),
+    GEMINI_API_KEY: z.string().min(1),
   }),
 });
 
@@ -43,6 +44,7 @@ const config = configSchema.parse({
     TOKEN_SECRET: process.env.TOKEN_SECRET,
     TOKEN_EXPIRES: process.env.TOKEN_EXPIRES,
     REFRESH_TOKEN_EXPIRES: process.env.REFRESH_TOKEN_EXPIRES,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   },
 });
 
