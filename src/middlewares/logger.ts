@@ -1,13 +1,13 @@
-import morgan from "morgan";
+// src/middleware/logging.ts
+import expressWinston from "express-winston";
 import logger from "../utils/logger";
 
-const morganMiddleware = morgan(
-  ":method :url :status :res[content-length] - :response-time ms",
-  {
-    stream: {
-      write: (message) => logger.http(message.trim()),
-    },
-  }
-);
+const requestLogger = expressWinston.logger({
+  winstonInstance: logger,
+  meta: true,
+  msg: "{{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms",
+  expressFormat: true,
+  colorize: false,
+});
 
-export default morganMiddleware;
+export default requestLogger;

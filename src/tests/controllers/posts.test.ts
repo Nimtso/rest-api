@@ -10,6 +10,7 @@ import { createServer } from "../../server";
 import postModel from "../../db/models/post";
 import { ObjectId } from "mongodb";
 import config from "../../utils/config";
+import { Post } from "../../types/posts";
 
 const app = createServer();
 
@@ -219,22 +220,134 @@ describe("Posts API (Integration Tests)", () => {
       const response = await request(app)
         .post("/posts/image")
         .set("Authorization", `Bearer ${mockToken}`)
-        .attach("file", testImagePath);
+        .send({
+          imageUrl:
+            "https://ynet-pic1.yit.co.il/cdn-cgi/image/format=auto/picserver5/crop_images/2017/10/08/pp8077879/pp8077879_0_0_650_848_0_x-large.jpg",
+        });
 
       expect(response.status).toBe(200);
-      const { url, title, content } = response.body;
-      expect(url).toContain(config.database.storage);
+      const { title, content } = response.body;
       expect(title).toBe(mockResponse.title);
       expect(content).toBe(mockResponse.content);
     });
 
-    it("should return 400 if no file is uploaded", async () => {
+    it("should return 400 if no url is sent", async () => {
       const response = await request(app)
         .post("/posts/image")
         .set("Authorization", `Bearer ${mockToken}`);
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty("error");
+    });
+  });
+
+  describe("Post Like Functionality", () => {
+    let testPost: mongoose.Document<unknown, {}, Post> &
+      Post & { _id: mongoose.Types.ObjectId };
+    let anotherUserId: mongoose.Types.ObjectId;
+
+    beforeEach(async () => {
+      testPost = await postModel.create({
+        title: "Test Post",
+        content: "Test Content",
+        sender: "User1",
+        imageUrl: "https://example.com/image.jpg",
+        likes: [],
+      });
+
+      anotherUserId = new mongoose.Types.ObjectId();
+    });
+
+    it("should like a post successfully", async () => {
+      const response = await request(app)
+        .put(`/posts/${testPost._id}/like`)
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Post liked successfully");
+
+      const updatedPost = await postModel.findById(testPost._id);
+      expect(updatedPost?.likes).toContainEqual(mockUserId);
+    });
+
+    it("should unlike a previously liked post", async () => {
+      await postModel.findByIdAndUpdate(testPost._id, {
+        $addToSet: { likes: mockUserId },
+      });
+
+      const response = await request(app)
+        .put(`/posts/${testPost._id}/like`)
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Post unliked successfully");
+
+      const updatedPost = await postModel.findById(testPost._id);
+      expect(updatedPost?.likes).not.toContainEqual(mockUserId);
+    });
+
+    it("should prevent duplicate likes from the same user", async () => {
+      // First like
+      await request(app)
+        .put(`/posts/${testPost._id}/like`)
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      const response = await request(app)
+        .put(`/posts/${testPost._id}/like`)
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Post unliked successfully");
+
+      const updatedPost = await postModel.findById(testPost._id);
+      expect(
+        updatedPost?.likes.filter(
+          (id) => mockUserId.toString() === id.toString()
+        )
+      ).toHaveLength(0);
+    });
+
+    it("should allow multiple users to like the same post", async () => {
+      const anotherToken = jwt.sign(
+        { _id: anotherUserId },
+        config.auth.TOKEN_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      // First user likes
+      await request(app)
+        .put(`/posts/${testPost._id}/like`)
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      // Second user likes
+      const response = await request(app)
+        .put(`/posts/${testPost._id}/like`)
+        .set("Authorization", `Bearer ${anotherToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Post liked successfully");
+
+      const updatedPost = await postModel.findById(testPost._id);
+      expect(updatedPost?.likes).toHaveLength(2);
+      expect(updatedPost?.likes).toContainEqual(mockUserId);
+      expect(updatedPost?.likes).toContainEqual(anotherUserId);
+    });
+
+    it("should return 404 for non-existent post", async () => {
+      const fakePostId = new mongoose.Types.ObjectId();
+
+      const response = await request(app)
+        .put(`/posts/${fakePostId}/like`)
+        .set("Authorization", `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Post not found");
+    });
+
+    it("should require authentication to like a post", async () => {
+      const response = await request(app).put(`/posts/${testPost._id}/like`);
+
+      expect(response.status).toBe(401);
     });
   });
 });

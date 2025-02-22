@@ -12,7 +12,7 @@ dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 const configSchema = z.object({
   app: z.object({
     port: z.string().transform(Number).default("3000"),
-    env: z.enum(["dev", "production", "test"]).default("dev"),
+    env: z.enum(["development", "production", "test"]).default("development"),
     domainBase: z.string().default("http://localhost"),
   }),
   database: z.object({

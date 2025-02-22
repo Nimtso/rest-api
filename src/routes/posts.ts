@@ -1,11 +1,13 @@
+import { Request, Response } from "express";
 import express from "express";
 
 import postHandler from "../controllers/posts";
 import validateData from "../middlewares/validators";
 import postSchemas from "../schemas/posts";
 import { authMiddleware } from "../middlewares/auth";
-import uploadMiddleware from "../middlewares/multer";
-import config from "../utils/config";
+import postModel from "../db/models/post";
+import { Post } from "../types/posts";
+import { StatusCodes } from "http-status-codes";
 
 const router = express.Router();
 
@@ -117,7 +119,8 @@ router.get(
  *       404:
  *         description: Post not found
  */
-router.get("/:id", postHandler.findById.bind(postHandler));
+
+router.get("/:id", authMiddleware, postHandler.findById.bind(postHandler));
 
 /**
  * @swagger
@@ -254,9 +257,16 @@ router.put(
 router.post(
   "/image",
   authMiddleware,
-  uploadMiddleware,
   validateData(postSchemas.uploadPostImageSchema),
   postHandler.uploadPostImage.bind(postHandler)
 );
+
+router.put("/:postId/like", authMiddleware, async (req, res, next) => {
+  try {
+    await postHandler.likePost(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

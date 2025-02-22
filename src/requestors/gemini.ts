@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import fs from "fs";
+import axios from "axios";
 import Logger from "../utils/logger";
 import config from "../utils/config";
 
@@ -12,30 +12,45 @@ const prompt = `
   Return only these two lines without extra words.
 `;
 
-const analyzeImage = async (filePath: string, maxRetries = 5, delay = 1000) => {
+const isValidImageUrl = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(parsedUrl.pathname);
+  } catch {
+    return false;
+  }
+};
+
+const analyzeImage = async (imageUrl: string, maxRetries = 5, delay = 1000) => {
+  if (!isValidImageUrl(imageUrl)) {
+    throw new Error("Invalid image URL. Only remote image URLs are allowed.");
+  }
+
   const genAI = new GoogleGenerativeAI(API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-  // Read and encode image as base64
-  const imageBuffer = fs.readFileSync(`${process.cwd()}/${filePath}`);
-  const imageBase64 = imageBuffer.toString("base64");
+  let imageBase64: string;
+
+  try {
+    Logger.info(`Downloading image from URL: ${imageUrl}`);
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    imageBase64 = Buffer.from(response.data, "binary").toString("base64");
+  } catch (error) {
+    throw new Error("Failed to download the image from the URL.");
+  }
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      Logger.info("requesting Gemini API...");
+      Logger.info("Requesting Gemini API...");
       const result = await model.generateContent([
-        {
-          text: prompt,
-        },
+        { text: prompt },
         { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
       ]);
-      const response = extractTitleAndContent(result.response.text());
-      return response;
+      return extractTitleAndContent(result.response.text());
     } catch (error: any) {
       Logger.warn(`Attempt ${attempt} failed. Retrying in ${delay}ms...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
-
-      delay *= 2; // Exponential backoff
+      delay *= 2;
     }
   }
 
@@ -43,7 +58,7 @@ const analyzeImage = async (filePath: string, maxRetries = 5, delay = 1000) => {
 };
 
 const extractTitleAndContent = (responseText: string) => {
-  let lines = responseText.trim().split("\n");
+  const lines = responseText.trim().split("\n");
 
   const title = lines.find((line) => line.startsWith("Title:"));
   const content = lines.find((line) => line.startsWith("Content:"));
