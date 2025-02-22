@@ -12,7 +12,7 @@ const findCommentSchema = {
 
 const createCommentSchema = {
   body: z.object({
-    postId: z.string().length(24),
+    postId: z.string().min(24),
     content: z.string().optional(),
     sender: z.string().min(1),
   }),

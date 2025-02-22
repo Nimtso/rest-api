@@ -33,7 +33,9 @@ const updatePostSchema = {
 };
 
 const uploadPostImageSchema = {
-  file: z.object({}),
+  body: z.object({
+    imageUrl: z.string({}),
+  }),
 };
 
 export default {
