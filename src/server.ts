@@ -3,6 +3,7 @@ import path from "path";
 import https from "https";
 import dotenv from "dotenv";
 import express from "express";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const createServer = () => {
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser());
   swaggerMiddleware(app);
   app.use(loggerMiddleware);
   app.use("/", routes);
@@ -27,12 +29,10 @@ const createServer = () => {
   app.use(express.static("front"));
 
   app.use((req, res, next) => {
-    // If the request is for a file (e.g., .js, .css, .png), let Express handle it
     if (req.originalUrl.includes(".")) {
       return next();
     }
 
-    // Otherwise, serve index.html for frontend routing
     res.sendFile(path.resolve("front", "index.html"), (err) => {
       if (err) {
         console.error("Error serving index.html:", err);

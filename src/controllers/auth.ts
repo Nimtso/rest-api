@@ -1,158 +1,108 @@
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { NextFunction, Request, response, Response } from "express";
-import { StatusCodes } from "http-status-codes";
 
+import UserModel from "../db/models/user";
 import config from "../utils/config";
-import UserModel, { IUser } from "../db/models/user";
-import Logger from "../utils/logger";
+const generateTokens = (userId: string) => ({
+  accessToken: jwt.sign({ userId }, config.auth.TOKEN_SECRET, {
+    expiresIn: "15m",
+  }),
+  refreshToken: jwt.sign({ userId }, config.auth.TOKEN_SECRET, {
+    expiresIn: "7d",
+  }),
+});
 
-const { TOKEN_SECRET, TOKEN_EXPIRES, REFRESH_TOKEN_EXPIRES } = config.auth;
-
-type StringNumberValue = `${number}`;
-const jwtOptions = { expiresIn: TOKEN_EXPIRES as StringNumberValue } as const;
-
-const generateAccessToken = (user: IUser): string => {
-  return jwt.sign(
-    { _id: user._id, email: user.email },
-    TOKEN_SECRET,
-    jwtOptions
-  );
-};
-
-const generateRefreshToken = (user: IUser): string => {
-  return jwt.sign({ _id: user._id, email: user.email }, TOKEN_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRES as StringNumberValue,
-  });
-};
-
-const register = async (req: Request, res: Response): Promise<void> => {
-  const { email, password, name } = req.body;
-
-  const existingUser = await UserModel.findOne({ email });
-  if (existingUser) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "User already exists" });
-    return;
-  }
-
-  const newUser = new UserModel({ email, password, name });
-  await newUser.save();
-
-  res.status(StatusCodes.CREATED).json({
-    message: "User registered successfully",
-    user: { email: newUser.email, _id: newUser._id, name: newUser.name },
-  });
-};
-
-const login = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
-
-  const user = await UserModel.findOne({ email });
-  if (!user) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "Invalid credentials" });
-    return;
-  }
-
-  const isValidPassword = await user.isValidPassword(password);
-  if (!isValidPassword) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "Invalid credentials" });
-    return;
-  }
-
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  user.refreshToken.push(refreshToken);
-  await user.save();
-
-  res.status(StatusCodes.OK).json({ accessToken, refreshToken, _id: user._id });
-};
-
-const refresh = async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "Refresh token is required" });
-    return;
-  }
-
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { refreshToken } = req.body;
-    const decoded = jwt.verify(refreshToken, TOKEN_SECRET) as jwt.JwtPayload;
+    const { email, password, name } = req.body;
+    const user = await UserModel.create({ email, password, name });
+    const tokens = generateTokens(user._id as string);
+    await user.addRefreshToken(tokens.refreshToken);
 
-    const user = await UserModel.findById(decoded._id);
-    if (!user || !user.refreshToken.includes(refreshToken)) {
-      res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Invalid refresh token" });
-      return;
-    }
-
-    const newAccessToken = jwt.sign(
-      { _id: user._id, email: user.email },
-      TOKEN_SECRET,
-      jwtOptions
-    );
-    const newRefreshToken = jwt.sign(
-      { _id: user._id, email: user.email },
-      TOKEN_SECRET,
-      jwtOptions
-    );
-
-    user.refreshToken = user.refreshToken.filter(
-      (token) => token !== refreshToken
-    );
-    user.refreshToken.push(newRefreshToken);
-    await user.save();
-
-    res
-      .status(StatusCodes.OK)
-      .json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+    res.status(201).json({
+      ...tokens,
+      user: { id: user._id, email: user.email, name: user.name },
+    });
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Refresh token has expired" });
-      return;
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Invalid refresh token" });
-      return;
-    }
-
-    throw error;
+    res.status(400).json({ message: "Registration failed" });
   }
 };
 
-const logout = async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken } = req.body;
+export const login = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+    const user = await UserModel.findOne({ email });
 
-  const user = await UserModel.findOne({
-    refreshToken: { $in: [refreshToken] },
-  });
+    if (!user || !(await user.isValidPassword(password))) {
+      res.status(401).json({ message: "Invalid credentials" });
+      return;
+    }
 
-  if (!user) {
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "Invalid refresh token" });
-    return;
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      config.auth.TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      config.auth.TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    await user.addRefreshToken(refreshToken);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: config.app.env === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      accessToken,
+      user: { id: user._id, email: user.email, name: user.name },
+    });
+  } catch (error) {
+    res.status(400).json({ message: "Login failed" });
   }
-
-  user.refreshToken = user.refreshToken.filter(
-    (token: string) => token !== refreshToken
-  );
-  await user.save();
-
-  res.status(StatusCodes.OK).json({ message: "Logout successful" });
 };
 
-export default { logout, register, login, refresh };
+export const refresh = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    const decoded = jwt.verify(refreshToken, config.auth.TOKEN_SECRET) as {
+      userId: string;
+    };
+    const user = await UserModel.findById(decoded.userId);
+
+    if (!user) {
+      res.status(401).json({ message: "User not found" });
+      return;
+    }
+
+    await user.revokeRefreshToken(refreshToken);
+    const newRefreshToken = jwt.sign(
+      { userId: user._id },
+      config.auth.TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      config.auth.TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    await user.addRefreshToken(newRefreshToken);
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ accessToken });
+  } catch (error) {
+    res.status(401).json({ message: "Invalid refresh token" });
+  }
+};
