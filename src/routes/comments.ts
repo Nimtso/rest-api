@@ -1,4 +1,5 @@
 import express from "express";
+
 import commentHandler from "../controllers/comments";
 import validateData from "../middlewares/validators";
 import { authMiddleware } from "../middlewares/auth";

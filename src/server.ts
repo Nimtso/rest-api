@@ -1,5 +1,8 @@
-import express from "express";
+import fs from "fs";
+import path from "path";
+import https from "https";
 import dotenv from "dotenv";
+import express from "express";
 
 dotenv.config();
 
@@ -10,7 +13,7 @@ import { connect as connectMongo } from "./db/utils";
 import config from "./utils/config";
 import swaggerMiddleware from "./middlewares/swagger";
 
-const PORT = config.app.port;
+const port = config.app.port;
 
 const createServer = () => {
   const app = express();
@@ -20,6 +23,23 @@ const createServer = () => {
   swaggerMiddleware(app);
   app.use(loggerMiddleware);
   app.use("/", routes);
+  app.use("/storage", express.static("storage"));
+  app.use(express.static("front"));
+
+  app.use((req, res, next) => {
+    // If the request is for a file (e.g., .js, .css, .png), let Express handle it
+    if (req.originalUrl.includes(".")) {
+      return next();
+    }
+
+    // Otherwise, serve index.html for frontend routing
+    res.sendFile(path.resolve("front", "index.html"), (err) => {
+      if (err) {
+        console.error("Error serving index.html:", err);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+  });
 
   return app;
 };
@@ -33,9 +53,17 @@ const init = async () => {
   await connectDB();
   const app = createServer();
 
-  app.listen(PORT, () => {
-    logger.debug(`Listening on port ${PORT}`);
-  });
+  if (process.env.NODE_ENV !== "production") {
+    app.listen(port, () => {
+      logger.debug(`Listening on port ${port}`);
+    });
+  } else {
+    const options = {
+      key: fs.readFileSync("../client-key.pem"),
+      cert: fs.readFileSync("../client-cert.pem"),
+    };
+    https.createServer(options, app).listen(port);
+  }
 };
 
 export { createServer, init };

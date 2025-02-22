@@ -6,6 +6,7 @@ type ValidationSchema = {
   body?: ZodSchema;
   params?: ZodSchema;
   query?: ZodSchema;
+  file?: ZodSchema;
 };
 
 const validate = (schema: ValidationSchema) => {
@@ -14,6 +15,7 @@ const validate = (schema: ValidationSchema) => {
       if (schema.body) schema.body.parse(req.body);
       if (schema.params) schema.params.parse(req.params);
       if (schema.query) schema.query.parse(req.query);
+      if (schema.file) schema.file.parse(req.file);
       next();
     } catch (error: any) {
       if (error instanceof ZodError) {

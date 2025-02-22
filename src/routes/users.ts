@@ -1,4 +1,5 @@
 import express from "express";
+
 import userHandler from "../controllers/users";
 import validateData from "../middlewares/validators";
 import userSchemas from "../schemas/users";

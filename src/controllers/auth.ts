@@ -4,18 +4,24 @@ import { StatusCodes } from "http-status-codes";
 
 import config from "../utils/config";
 import UserModel, { IUser } from "../db/models/user";
+import Logger from "../utils/logger";
 
 const { TOKEN_SECRET, TOKEN_EXPIRES, REFRESH_TOKEN_EXPIRES } = config.auth;
 
+type StringNumberValue = `${number}`;
+const jwtOptions = { expiresIn: TOKEN_EXPIRES as StringNumberValue } as const;
+
 const generateAccessToken = (user: IUser): string => {
-  return jwt.sign({ _id: user._id, email: user.email }, TOKEN_SECRET, {
-    expiresIn: TOKEN_EXPIRES,
-  });
+  return jwt.sign(
+    { _id: user._id, email: user.email },
+    TOKEN_SECRET,
+    jwtOptions
+  );
 };
 
 const generateRefreshToken = (user: IUser): string => {
   return jwt.sign({ _id: user._id, email: user.email }, TOKEN_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRES,
+    expiresIn: REFRESH_TOKEN_EXPIRES as StringNumberValue,
   });
 };
 
@@ -92,12 +98,12 @@ const refresh = async (req: Request, res: Response): Promise<void> => {
     const newAccessToken = jwt.sign(
       { _id: user._id, email: user.email },
       TOKEN_SECRET,
-      { expiresIn: config.auth.TOKEN_EXPIRES }
+      jwtOptions
     );
     const newRefreshToken = jwt.sign(
       { _id: user._id, email: user.email },
       TOKEN_SECRET,
-      { expiresIn: config.auth.REFRESH_TOKEN_EXPIRES }
+      jwtOptions
     );
 
     user.refreshToken = user.refreshToken.filter(

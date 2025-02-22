@@ -1,6 +1,7 @@
 import express from "express";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import config from "../utils/config";
 
 const options = {
   definition: {
@@ -10,7 +11,10 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost:3000" }],
+    servers: [
+      { url: "http://localhost:" + config.app.port },
+      { url: config.app.domainBase },
+    ],
   },
   components: {
     securitySchemes: {

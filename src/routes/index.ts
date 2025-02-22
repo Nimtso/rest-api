@@ -1,5 +1,4 @@
 import express from "express";
-import swaggerMiddleware from "../middlewares/swagger";
 
 import healthRoutes from "./health";
 import postRoutes from "./posts";
