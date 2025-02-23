@@ -1,13 +1,10 @@
-import { Request, Response } from "express";
 import express from "express";
 
 import postHandler from "../controllers/posts";
 import validateData from "../middlewares/validators";
 import postSchemas from "../schemas/posts";
 import { authMiddleware } from "../middlewares/auth";
-import postModel from "../db/models/post";
-import { Post } from "../types/posts";
-import { StatusCodes } from "http-status-codes";
+import uploadMiddleware from "../middlewares/multer";
 
 const router = express.Router();
 
@@ -216,49 +213,6 @@ router.put(
   authMiddleware,
   validateData(postSchemas.updatePostSchema),
   postHandler.update.bind(postHandler)
-);
-
-/**
- * @swagger
- * /posts/image:
- *   post:
- *     summary: Upload an image for a post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: The image file to upload
- *     responses:
- *       200:
- *         description: Image uploaded successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 url:
- *                   type: string
- *                   description: URL of the uploaded image
- *       400:
- *         description: Bad request - No file uploaded
- *       401:
- *         description: Unauthorized - Access token is missing or invalid
- */
-
-router.post(
-  "/image",
-  authMiddleware,
-  validateData(postSchemas.uploadPostImageSchema),
-  postHandler.uploadPostImage.bind(postHandler)
 );
 
 router.put("/:postId/like", authMiddleware, async (req, res, next) => {

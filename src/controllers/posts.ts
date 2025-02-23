@@ -1,20 +1,35 @@
+import mongoose from "mongoose";
 import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
+
 import postModel from "../db/models/post";
 import { analyzeImage } from "../requestors/gemini";
 import { Post } from "../types/posts";
 import BaseController from "./base";
-import mongoose from "mongoose";
-import { StatusCodes } from "http-status-codes";
+import config from "../utils/config";
 
 class PostsController extends BaseController<Post> {
   constructor() {
     super(postModel);
   }
 
+  insert = async (req: Request, res: Response) => {
+    let item = req.body;
+    if (!item.content || !item.title) {
+      const generativeImageData = await analyzeImage(item.imageUrl);
+      item = { ...item, ...generativeImageData };
+    }
+    const result = await postModel.insertMany(item);
+    res.status(StatusCodes.CREATED).send(result);
+  };
+
   uploadPostImage = async (req: Request, res: Response) => {
-    const imageUrl: string = req.body.imageUrl;
-    const { title, content } = await analyzeImage(imageUrl);
-    res.status(200).send({ title, content });
+    const filePath = req.file?.path.replace(/\\/g, "/");
+    const generativeImageData = await analyzeImage(filePath || "");
+    const domain = config.app.domainBase + ":" + config.app.port;
+    res
+      .status(200)
+      .send({ url: domain + "/" + filePath, ...generativeImageData });
   };
 
   findById = async (req: Request, res: Response): Promise<void> => {

@@ -12,8 +12,8 @@ const findPostSchema = {
 
 const createPostSchema = {
   body: z.object({
-    title: z.string().min(1),
-    content: z.string().min(1),
+    title: z.string().min(1).optional(),
+    content: z.string().min(1).optional(),
     sender: z.string().min(1),
     imageUrl: z.string().min(1),
   }),
@@ -32,15 +32,8 @@ const updatePostSchema = {
     .strict(),
 };
 
-const uploadPostImageSchema = {
-  body: z.object({
-    imageUrl: z.string({}),
-  }),
-};
-
 export default {
   findPostSchema,
   createPostSchema,
   updatePostSchema,
-  uploadPostImageSchema,
 };

@@ -15,7 +15,6 @@ const prompt = `
 const isValidImageUrl = (url: string) => {
   try {
     const parsedUrl = new URL(url);
-    return true;
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(parsedUrl.pathname);
   } catch {
     return false;

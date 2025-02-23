@@ -3,7 +3,7 @@ import config from "../utils/config";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, `${config.database.storage}/`);
+    cb(null, `${config.database.storage}\\`);
   },
   filename: function (req, file, cb) {
     const ext = file.originalname

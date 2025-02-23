@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import axios from "axios";
 import jwt from "jsonwebtoken";
 import request from "supertest";
 import mongoose from "mongoose";
@@ -15,18 +16,39 @@ import { Post } from "../../types/posts";
 const app = createServer();
 
 jest.mock("@google/generative-ai");
+jest.mock("axios");
 const mockUserId = new mongoose.Types.ObjectId();
 const mockToken = jwt.sign({ _id: mockUserId }, config.auth.TOKEN_SECRET, {
   expiresIn: "1h",
 });
 
 describe("Posts API (Integration Tests)", () => {
+  const mockAIResponse = { title: "mocked title", content: "mocked content" };
+  const testImagePath = path.join(__dirname, "test-image.jpg");
+
   beforeAll(async () => {
     await connectTestDB();
+    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
+      getGenerativeModel: jest.fn().mockReturnValue({
+        generateContent: jest.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              `Title: ${mockAIResponse.title}\nContent: ${mockAIResponse.content}`,
+          },
+        }),
+      }),
+    }));
+
+    if (!fs.existsSync(testImagePath)) {
+      fs.writeFileSync(testImagePath, "dummy image content");
+    }
   });
 
   afterAll(async () => {
     await disconnectTestDB();
+    if (fs.existsSync(testImagePath)) {
+      fs.unlinkSync(testImagePath);
+    }
   });
 
   beforeEach(async () => {
@@ -52,6 +74,29 @@ describe("Posts API (Integration Tests)", () => {
     const postInDB = await postModel.findById(response.body[0]._id);
     expect(postInDB).toBeTruthy();
     expect(postInDB?.title).toBe("Sample Title");
+  });
+
+  it("should create a post with AI when content or title not exist", async () => {
+    const imageBuffer = fs.readFileSync(testImagePath);
+    (axios.get as jest.Mock).mockResolvedValue({ data: imageBuffer });
+    const newPost = {
+      sender: "User1",
+      imageUrl: "https://example.com/image.jpg",
+    };
+
+    const response = await request(app)
+      .post("/posts")
+      .set("Authorization", `Bearer ${mockToken}`)
+      .send(newPost);
+
+    expect(response.status).toBe(201);
+    expect(response.body[0].title).toEqual(mockAIResponse.title);
+    expect(response.body[0].content).toEqual(mockAIResponse.content);
+
+    const postInDB = await postModel.findById(response.body[0]._id);
+    expect(postInDB).toBeTruthy();
+    expect(postInDB?.title).toBe(mockAIResponse.title);
+    expect(postInDB?.content).toBe(mockAIResponse.content);
   });
 
   it("should not create a post with invalid data", async () => {
@@ -186,59 +231,6 @@ describe("Posts API (Integration Tests)", () => {
 
     expect(response.status).toBe(404);
     expect(response.text).toBe("Cannot find item");
-  });
-
-  describe("Upload post image", () => {
-    const testImagePath = path.join(__dirname, "test-image.jpg");
-    const mockResponse = { title: "mocked title", content: "mocked content" };
-
-    beforeAll(() => {
-      (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-        getGenerativeModel: jest.fn().mockReturnValue({
-          generateContent: jest.fn().mockResolvedValue({
-            response: {
-              text: () =>
-                `Title: ${mockResponse.title}\nContent: ${mockResponse.content}`,
-            },
-          }),
-        }),
-      }));
-
-      if (!fs.existsSync(testImagePath)) {
-        fs.writeFileSync(testImagePath, "dummy image content");
-      }
-    });
-
-    afterAll(() => {
-      const imagePath = path.join(__dirname, "test-image.jpg");
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    });
-
-    it("should upload an image successfully", async () => {
-      const response = await request(app)
-        .post("/posts/image")
-        .set("Authorization", `Bearer ${mockToken}`)
-        .send({
-          imageUrl:
-            "https://ynet-pic1.yit.co.il/cdn-cgi/image/format=auto/picserver5/crop_images/2017/10/08/pp8077879/pp8077879_0_0_650_848_0_x-large.jpg",
-        });
-
-      expect(response.status).toBe(200);
-      const { title, content } = response.body;
-      expect(title).toBe(mockResponse.title);
-      expect(content).toBe(mockResponse.content);
-    });
-
-    it("should return 400 if no url is sent", async () => {
-      const response = await request(app)
-        .post("/posts/image")
-        .set("Authorization", `Bearer ${mockToken}`);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty("error");
-    });
   });
 
   describe("Post Like Functionality", () => {
