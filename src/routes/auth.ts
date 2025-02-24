@@ -1,31 +1,14 @@
 import express from "express";
-
-import authController from "../controllers/auth";
+import { login, register, refresh, logout } from "../controllers/auth";
+import { validateAuth } from "../middlewares/validate";
 
 const router = express.Router();
 
 /**
  * @swagger
- * tags:
- *   name: Auth
- *   description: The Authentication API
- */
-
-/**
- * @swagger
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- */
-
-/**
- * @swagger
  * components:
  *   schemas:
- *     User:
+ *     AuthRequest:
  *       type: object
  *       required:
  *         - email
@@ -33,140 +16,108 @@ const router = express.Router();
  *       properties:
  *         email:
  *           type: string
- *           description: The user email
+ *           format: email
  *         password:
  *           type: string
- *           description: The user password
- *       example:
- *         email: 'bob@gmail.com'
- *         password: '123456'
+ *           minLength: 8
+ *         name:
+ *           type: string
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         accessToken:
+ *           type: string
+ *         refreshToken:
+ *           type: string
+ *         user:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *             email:
+ *               type: string
+ *             name:
+ *               type: string
  */
 
 /**
  * @swagger
  * /auth/register:
  *   post:
- *     summary: registers a new user
+ *     summary: Register a new user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             $ref: '#/components/schemas/AuthRequest'
  *     responses:
- *       200:
- *         description: The new user
+ *       201:
+ *         description: User registered successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/AuthResponse'
  */
-router.post("/register", authController.register);
+router.post("/register", validateAuth, register);
 
 /**
  * @swagger
  * /auth/login:
  *   post:
  *     summary: User login
- *     description: Authenticate user and return tokens
- *     tags:
- *       - Auth
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             $ref: '#/components/schemas/AuthRequest'
  *     responses:
  *       200:
- *         description: Successful login
+ *         description: Login successful
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 accessToken:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 refreshToken:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 _id:
- *                   type: string
- *                   example: 60d0fe4f5311236168a109ca
- *       400:
- *         description: Invalid credentials or request
- *       500:
- *         description: Server error
+ *               $ref: '#/components/schemas/AuthResponse'
  */
-router.post("/login", authController.login);
+router.post("/login", validateAuth, login);
 
 /**
  * @swagger
  * /auth/refresh:
  *   post:
- *     summary: Refresh tokens
- *     description: Refresh access and refresh tokens using the provided refresh token
- *     tags:
- *       - Auth
+ *     summary: Refresh access token
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - refreshToken
  *             properties:
  *               refreshToken:
  *                 type: string
- *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *     responses:
- *       200:
- *         description: Tokens refreshed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 accessToken:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 refreshToken:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *       400:
- *         description: Invalid refresh token
- *       500:
- *         description: Server error
  */
-router.post("/refresh", authController.refresh);
+router.post("/refresh", refresh);
+
+export default router;
 
 /**
  * @swagger
  * /auth/logout:
  *   post:
- *     summary: User logout
- *     description: Logout user and invalidate the refresh token
- *     tags:
- *       - Auth
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               refreshToken:
- *                 type: string
- *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     summary: Logout user and invalidate refresh token
+ *     tags: [Auth]
  *     responses:
- *       200:
- *         description: Successful logout
- *       400:
- *         description: Invalid refresh token
+ *       204:
+ *         description: Successfully logged out
  *       500:
- *         description: Server error
+ *         description: Server error during logout
+ *     security:
+ *       - cookieAuth: []
  */
-router.post("/logout", authController.logout);
-
-export default router;
+router.post("/logout", logout);

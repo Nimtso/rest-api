@@ -35,7 +35,7 @@ const config = configSchema.parse({
   },
   database: {
     uri: process.env.URI_MONGO,
-    storage: process.env.STORAGE,
+    storage: process.env.STORAGE_PATH,
   },
   logger: {
     level: process.env.LOG_LEVEL,
