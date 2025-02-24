@@ -3,6 +3,7 @@ import express from "express";
 import userHandler from "../controllers/users";
 import validateData from "../middlewares/validators";
 import userSchemas from "../schemas/users";
+import { authMiddleware } from "../middlewares/auth";
 
 const router = express.Router();
 
@@ -38,6 +39,26 @@ const router = express.Router();
  *   name: Users
  *   description: API for managing users
  */
+
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized - Invalid or missing authentication token
+ */
+router.get("/me", authMiddleware, userHandler.getCurrentUser.bind(userHandler));
 
 /**
  * @swagger

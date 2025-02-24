@@ -4,7 +4,6 @@ import postHandler from "../controllers/posts";
 import validateData from "../middlewares/validators";
 import postSchemas from "../schemas/posts";
 import { authMiddleware } from "../middlewares/auth";
-import uploadMiddleware from "../middlewares/multer";
 
 const router = express.Router();
 

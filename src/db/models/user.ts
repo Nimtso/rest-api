@@ -113,4 +113,5 @@ userSchema.methods.cleanupExpiredTokens = async function (): Promise<void> {
 userSchema.index({ "refreshTokens.token": 1 });
 
 const UserModel = mongoose.model<IUser>("Users", userSchema);
+
 export default UserModel;

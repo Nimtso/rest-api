@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes";
 import config from "../utils/config";
+import { AuthenticatedRequest } from "../types/auth";
 
 export const authMiddleware = (
   req: Request,
@@ -27,7 +28,9 @@ export const authMiddleware = (
 
   try {
     const payload = jwt.verify(token, config.auth.TOKEN_SECRET) as Payload;
-    req.params.userId = payload.userId;
+    (req as AuthenticatedRequest & Request).user = {
+      id: payload.userId,
+    };
 
     next();
   } catch (err) {
