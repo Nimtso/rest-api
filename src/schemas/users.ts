@@ -26,6 +26,7 @@ const updateUserSchema = {
       password: z.string().min(1).optional(),
       email: z.string().min(1).optional(),
       name: z.string().min(1).optional(),
+      avatarUrl: z.string().min(1).optional(),
     })
     .strict(),
 };

@@ -16,6 +16,7 @@ export interface IUser extends Document {
   refreshTokens: RefreshToken[];
   lastLogin?: Date;
   passwordChangedAt?: Date;
+  avatarUrl: string;
   isValidPassword(password: string): Promise<boolean>;
   addRefreshToken(token: string): Promise<void>;
   revokeRefreshToken(token: string): Promise<void>;
@@ -52,6 +53,7 @@ const userSchema = new Schema<IUser>(
     refreshTokens: [refreshTokenSchema],
     lastLogin: Date,
     passwordChangedAt: Date,
+    avatarUrl: String,
   },
   {
     timestamps: true,
@@ -108,7 +110,6 @@ userSchema.methods.cleanupExpiredTokens = async function (): Promise<void> {
   await this.save();
 };
 
-userSchema.index({ email: 1 });
 userSchema.index({ "refreshTokens.token": 1 });
 
 const UserModel = mongoose.model<IUser>("Users", userSchema);
