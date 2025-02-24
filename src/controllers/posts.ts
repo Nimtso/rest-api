@@ -5,6 +5,7 @@ import { Post } from "../types/posts";
 import BaseController from "./base";
 import mongoose from "mongoose";
 import { StatusCodes } from "http-status-codes";
+import { AuthenticatedRequest } from "../types/auth";
 
 class PostsController extends BaseController<Post> {
   constructor() {
@@ -50,7 +51,9 @@ class PostsController extends BaseController<Post> {
   likePost = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { postId } = req.params;
-      const userId = new mongoose.Types.ObjectId(req.params.userId as string);
+      const userId = new mongoose.Types.ObjectId(
+        (req as AuthenticatedRequest & Request).user.id
+      );
 
       const post = await postModel.findById(postId);
 

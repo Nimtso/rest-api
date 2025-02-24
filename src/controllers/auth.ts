@@ -106,3 +106,37 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     res.status(401).json({ message: "Invalid refresh token" });
   }
 };
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      res.status(204).end();
+      return;
+    }
+
+    try {
+      const decoded = jwt.verify(refreshToken, config.auth.TOKEN_SECRET) as {
+        userId: string;
+      };
+
+      const user = await UserModel.findById(decoded.userId);
+      if (user) {
+        await user.revokeRefreshToken(refreshToken);
+      }
+    } catch (tokenError) {
+      console.log("Invalid token during logout:", tokenError);
+    }
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: config.app.env === "production",
+      sameSite: "strict",
+    });
+
+    res.status(204).end();
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Logout failed" });
+  }
+};

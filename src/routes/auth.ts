@@ -1,5 +1,5 @@
 import express from "express";
-import { login, register, refresh } from "../controllers/auth";
+import { login, register, refresh, logout } from "../controllers/auth";
 import { validateAuth } from "../middlewares/validate";
 
 const router = express.Router();
@@ -105,3 +105,19 @@ router.post("/login", validateAuth, login);
 router.post("/refresh", refresh);
 
 export default router;
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user and invalidate refresh token
+ *     tags: [Auth]
+ *     responses:
+ *       204:
+ *         description: Successfully logged out
+ *       500:
+ *         description: Server error during logout
+ *     security:
+ *       - cookieAuth: []
+ */
+router.post("/logout", logout);

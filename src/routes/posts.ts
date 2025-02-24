@@ -5,9 +5,6 @@ import postHandler from "../controllers/posts";
 import validateData from "../middlewares/validators";
 import postSchemas from "../schemas/posts";
 import { authMiddleware } from "../middlewares/auth";
-import postModel from "../db/models/post";
-import { Post } from "../types/posts";
-import { StatusCodes } from "http-status-codes";
 
 const router = express.Router();
 
