@@ -8,6 +8,8 @@ import { Post } from "../types/posts";
 import BaseController from "./base";
 import config from "../utils/config";
 
+import { AuthenticatedRequest } from "../types/auth";
+
 class PostsController extends BaseController<Post> {
   constructor() {
     super(postModel);
