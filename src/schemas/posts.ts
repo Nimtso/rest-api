@@ -28,6 +28,7 @@ const updatePostSchema = {
       title: z.string().min(1).optional(),
       content: z.string().min(1).optional(),
       sender: z.string().min(1).optional(),
+      imageUrl: z.string().min(1).optional(),
     })
     .strict(),
 };
