@@ -27,7 +27,7 @@ export const authMiddleware = (
 
   try {
     const payload = jwt.verify(token, config.auth.TOKEN_SECRET) as Payload;
-    req.params.userId = payload._id;
+    req.params.userId = payload.userId;
 
     next();
   } catch (err) {
@@ -48,5 +48,5 @@ export const authMiddleware = (
 };
 
 type Payload = {
-  _id: string;
+  userId: string;
 };
