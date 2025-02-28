@@ -18,9 +18,13 @@ const app = createServer();
 jest.mock("@google/generative-ai");
 jest.mock("axios");
 const mockUserId = new mongoose.Types.ObjectId();
-const mockToken = jwt.sign({ _id: mockUserId }, config.auth.TOKEN_SECRET, {
-  expiresIn: "1h",
-});
+const mockToken = jwt.sign(
+  { userId: mockUserId.toString() },
+  config.auth.TOKEN_SECRET,
+  {
+    expiresIn: "1h",
+  }
+);
 
 describe("Posts API (Integration Tests)", () => {
   const mockAIResponse = { title: "mocked title", content: "mocked content" };
@@ -259,6 +263,7 @@ describe("Posts API (Integration Tests)", () => {
       expect(response.body.message).toBe("Post liked successfully");
 
       const updatedPost = await postModel.findById(testPost._id);
+
       expect(updatedPost?.likes).toContainEqual(mockUserId);
     });
 
@@ -301,7 +306,7 @@ describe("Posts API (Integration Tests)", () => {
 
     it("should allow multiple users to like the same post", async () => {
       const anotherToken = jwt.sign(
-        { _id: anotherUserId },
+        { userId: anotherUserId },
         config.auth.TOKEN_SECRET,
         { expiresIn: "1h" }
       );

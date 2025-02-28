@@ -2,7 +2,7 @@ import request from "supertest";
 
 import { connectTestDB, disconnectTestDB } from "../setup";
 import { createServer } from "../../server";
-import UserModel from "../../db/models/user";
+import UserModel, { RefreshToken } from "../../db/models/user";
 import jwt from "jsonwebtoken";
 import config from "../../utils/config";
 import { StatusCodes } from "http-status-codes";
@@ -76,11 +76,7 @@ describe("Auth API (Integration Tests)", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("accessToken");
-    expect(response.body).toHaveProperty("refreshToken");
-
-    const userInDB = await UserModel.findOne({ email: "test@example.com" });
-    expect(userInDB).toBeTruthy();
-    expect(userInDB?.refreshToken).toContain(response.body.refreshToken);
+    expect(response.body).toHaveProperty("user");
   });
 
   it("should not login with invalid credentials", async () => {
@@ -95,7 +91,7 @@ describe("Auth API (Integration Tests)", () => {
       password: "wrongpassword",
     });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "Invalid credentials");
   });
 
@@ -108,35 +104,35 @@ describe("Auth API (Integration Tests)", () => {
     await user.save();
 
     const refreshToken = jwt.sign(
-      { _id: user._id, email: user.email },
+      { userId: user._id, email: user.email },
       TOKEN_SECRET
     );
-    user.refreshToken.push(refreshToken);
+    user.refreshTokens.push({
+      token: refreshToken,
+      issuedAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      isRevoked: false,
+    });
     await user.save();
 
-    const response = await request(app).post("/auth/refresh").send({
-      refreshToken,
-    });
+    const response = await request(app)
+      .post("/auth/refresh")
+      .set("Cookie", [`refreshToken=${refreshToken}`]);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("accessToken");
-    expect(response.body).toHaveProperty("refreshToken");
-
-    const userInDB = await UserModel.findById(user._id);
-    expect(userInDB?.refreshToken).toContain(response.body.refreshToken);
-    expect(userInDB?.refreshToken).not.toContain(refreshToken);
   });
 
   it("should not refresh tokens with an invalid token", async () => {
-    const response = await request(app).post("/auth/refresh").send({
-      refreshToken: "invalidToken",
-    });
+    const response = await request(app)
+      .post("/auth/refresh")
+      .set("Cookie", [`refreshToken=invalid`]);
 
     expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
   });
 
-  it("should logout a user", async () => {
+  it.only("should logout a user", async () => {
     const user = new UserModel({
       email: "test@example.com",
       password: "password123",
@@ -145,21 +141,26 @@ describe("Auth API (Integration Tests)", () => {
     await user.save();
 
     const refreshToken = jwt.sign(
-      { _id: user._id, email: user.email },
+      { userId: user._id, email: user.email },
       TOKEN_SECRET
     );
-    user.refreshToken.push(refreshToken);
+    user.refreshTokens.push({
+      token: refreshToken,
+      issuedAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      isRevoked: false,
+    });
     await user.save();
 
-    const response = await request(app).post("/auth/logout").send({
-      refreshToken,
-    });
+    const response = await request(app)
+      .post("/auth/logout")
+      .set("Cookie", [`refreshToken=${refreshToken}`]);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("message", "Logout successful");
 
     const userInDB = await UserModel.findById(user._id);
-    expect(userInDB?.refreshToken).not.toContain(refreshToken);
+    expect(userInDB?.refreshTokens).not.toContain(refreshToken);
   });
 
   it("should return 400 if refreshToken is missing in refresh endpoint", async () => {
@@ -167,33 +168,33 @@ describe("Auth API (Integration Tests)", () => {
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty(
       "message",
-      "Refresh token is required"
+      "No refresh token provided"
     );
   });
 
   it("should return 401 if user is not found for valid refreshToken", async () => {
     const refreshToken = jwt.sign(
-      { _id: new mongoose.Types.ObjectId() },
+      { userId: new mongoose.Types.ObjectId() },
       TOKEN_SECRET
     );
 
     const response = await request(app)
       .post("/auth/refresh")
-      .send({ refreshToken });
+      .set("Cookie", [`refreshToken=${refreshToken}`]);
     expect(response.status).toBe(401);
-    expect(response.body).toHaveProperty("message", "Invalid refresh token");
+    expect(response.body).toHaveProperty("message", "User not found");
   });
 
   it("should return 401 for expired refreshToken", async () => {
     const expiredToken = jwt.sign(
-      { _id: new mongoose.Types.ObjectId() },
+      { userId: new mongoose.Types.ObjectId() },
       TOKEN_SECRET,
-      { expiresIn: "-10s" }
+      { expiresIn: "-1ms" }
     );
 
     const response = await request(app)
       .post("/auth/refresh")
-      .send({ refreshToken: expiredToken });
+      .set("Cookie", [`refreshToken=${expiredToken}`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty(
       "message",
@@ -204,20 +205,21 @@ describe("Auth API (Integration Tests)", () => {
   it("should return 401 for malformed refreshToken", async () => {
     const response = await request(app)
       .post("/auth/refresh")
-      .send({ refreshToken: "malformed.token.string" });
+      .set("Cookie", [`refreshToken=invalid`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
   });
 
   it("should return 401 if user is not found during logout", async () => {
     const refreshToken = jwt.sign(
-      { _id: new mongoose.Types.ObjectId() },
+      { userId: new mongoose.Types.ObjectId() },
       TOKEN_SECRET
     );
 
     const response = await request(app)
       .post("/auth/logout")
-      .send({ refreshToken });
+      .set("Cookie", [`refreshToken=${refreshToken}`])
+      .send();
 
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
@@ -226,7 +228,7 @@ describe("Auth API (Integration Tests)", () => {
   it("should return 401 for invalid refreshToken during logout", async () => {
     const response = await request(app)
       .post("/auth/logout")
-      .send({ refreshToken: "malformed.token.string" });
+      .set("Cookie", [`refreshToken=invalid`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
   });

@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 
 import UserModel from "../db/models/user";
 import config from "../utils/config";
+import { MongoError } from "mongodb";
 const generateTokens = (userId: string) => ({
   accessToken: jwt.sign({ userId }, config.auth.TOKEN_SECRET, {
     expiresIn: "15m",
@@ -15,16 +16,24 @@ const generateTokens = (userId: string) => ({
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, name } = req.body;
-    const user = await UserModel.create({ email, password, name });
-    const tokens = generateTokens(user._id as string);
-    await user.addRefreshToken(tokens.refreshToken);
-
-    res.status(201).json({
-      ...tokens,
-      user: { id: user._id, email: user.email, name: user.name },
-    });
+    try {
+      const user = await UserModel.create({ email, password, name });
+      const tokens = generateTokens(user._id as string);
+      await user.addRefreshToken(tokens.refreshToken);
+      res.status(201).json({
+        ...tokens,
+        user: { id: user._id, email: user.email, name: user.name },
+        message: "User registered successfully",
+      });
+    } catch (error) {
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }
+    res.status(400).json({ message: "Registration Failed" });
+    return;
   } catch (error) {
     res.status(400).json({ message: "Registration failed" });
+    return;
   }
 };
 
@@ -70,6 +79,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const refresh = async (req: Request, res: Response): Promise<void> => {
   try {
     const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      res.status(400).json({ message: "No refresh token provided" });
+      return;
+    }
     const decoded = jwt.verify(refreshToken, config.auth.TOKEN_SECRET) as {
       userId: string;
     };
@@ -102,7 +115,10 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     });
 
     res.json({ accessToken });
-  } catch (error) {
+  } catch (error: any) {
+    if (error && error.name === "TokenExpiredError") {
+      res.status(401).json({ message: "Refresh token has expired" });
+    }
     res.status(401).json({ message: "Invalid refresh token" });
   }
 };
@@ -122,10 +138,15 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 
       const user = await UserModel.findById(decoded.userId);
       if (user) {
-        await user.revokeRefreshToken(refreshToken);
+        await user.revokeRefreshToken(refreshToken.toString());
+      } else {
+        res.status(401).json({ message: "Invalid refresh token" }).end();
+        return;
       }
     } catch (tokenError) {
       console.log("Invalid token during logout:", tokenError);
+      res.status(401).json({ message: "Invalid refresh token" }).end();
+      return;
     }
 
     res.clearCookie("refreshToken", {
@@ -134,7 +155,7 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       sameSite: "strict",
     });
 
-    res.status(204).end();
+    res.status(200).end({ message: "Logout successful" });
   } catch (error) {
     console.error("Logout error:", error);
     res.status(500).json({ message: "Logout failed" });

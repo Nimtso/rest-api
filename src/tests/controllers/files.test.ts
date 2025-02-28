@@ -10,7 +10,7 @@ import config from "../../utils/config";
 const app = createServer();
 
 const mockUserId = new mongoose.Types.ObjectId();
-const mockToken = jwt.sign({ _id: mockUserId }, config.auth.TOKEN_SECRET, {
+const mockToken = jwt.sign({ userId: mockUserId }, config.auth.TOKEN_SECRET, {
   expiresIn: "1h",
 });
 
