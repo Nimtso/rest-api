@@ -30,12 +30,12 @@ describe("Users API (Integration Tests)", () => {
     const response = await request(app).post("/users").send(newUser);
 
     expect(response.status).toBe(201);
-    expect(response.body[0]).toMatchObject({
+    expect(response.body).toMatchObject({
       name: "John Doe",
       email: "john.doe@example.com",
     });
 
-    const userInDB = await userModel.findById(response.body[0]._id);
+    const userInDB = await userModel.findById(response.body._id);
     expect(userInDB).toBeTruthy();
     expect(userInDB?.email).toBe("john.doe@example.com");
   });

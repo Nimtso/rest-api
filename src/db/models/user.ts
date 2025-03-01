@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
-interface RefreshToken {
+export interface RefreshToken {
   token: string;
   issuedAt: Date;
   expiresAt: Date;

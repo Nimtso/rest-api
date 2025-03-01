@@ -29,9 +29,13 @@ class PostsController extends BaseController<Post> {
     const filePath = req.file?.path.replace(/\\/g, "/");
     const generativeImageData = await analyzeImage(filePath || "");
     const domain = config.app.domainBase + ":" + config.app.port;
+    const storagePath = config.database.storage;
     res
       .status(200)
-      .send({ url: domain + "/" + filePath, ...generativeImageData });
+      .send({
+        url: `${domain}/${storagePath}/${filePath}`,
+        ...generativeImageData,
+      });
   };
 
   findById = async (req: Request, res: Response): Promise<void> => {
@@ -72,27 +76,38 @@ class PostsController extends BaseController<Post> {
       );
 
       const post = await postModel.findById(postId);
-
       if (!post) {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      if (post.likes.includes(userId)) {
-        await postModel.findByIdAndUpdate(
+      // Check if the user has already liked the post by comparing ObjectId strings
+      const userHasLiked = post.likes.some(
+        (likeId) => likeId.toString() === userId.toString()
+      );
+
+      if (userHasLiked) {
+        const updatedPost = await postModel.findByIdAndUpdate(
           postId,
           { $pull: { likes: userId } },
           { new: true }
         );
-        return res.status(200).json({ message: "Post unliked successfully" });
+
+        return res.status(200).json({
+          message: "Post unliked successfully",
+          likesCount: updatedPost?.likes.length || 0,
+        });
       }
 
-      await postModel.findByIdAndUpdate(
+      const updatedPost = await postModel.findByIdAndUpdate(
         postId,
         { $addToSet: { likes: userId } },
         { new: true }
       );
 
-      return res.status(200).json({ message: "Post liked successfully" });
+      return res.status(200).json({
+        message: "Post liked successfully",
+        likesCount: updatedPost?.likes.length || 0,
+      });
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
