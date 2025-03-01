@@ -35,7 +35,6 @@ const createServer = () => {
 
     res.sendFile(path.resolve("front", "index.html"), (err) => {
       if (err) {
-        console.error("Error serving index.html:", err);
         res.status(500).send("Internal Server Error");
       }
     });

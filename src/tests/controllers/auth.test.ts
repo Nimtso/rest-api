@@ -132,7 +132,7 @@ describe("Auth API (Integration Tests)", () => {
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
   });
 
-  it.only("should logout a user", async () => {
+  it("should logout a user", async () => {
     const user = new UserModel({
       email: "test@example.com",
       password: "password123",

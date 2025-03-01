@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 import UserModel from "../db/models/user";
 import config from "../utils/config";
-import { MongoError } from "mongodb";
+
 const generateTokens = (userId: string) => ({
   accessToken: jwt.sign({ userId }, config.auth.TOKEN_SECRET, {
     expiresIn: "15m",
@@ -144,7 +144,6 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
         return;
       }
     } catch (tokenError) {
-      console.log("Invalid token during logout:", tokenError);
       res.status(401).json({ message: "Invalid refresh token" }).end();
       return;
     }
@@ -155,9 +154,8 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       sameSite: "strict",
     });
 
-    res.status(200).end({ message: "Logout successful" });
+    res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    console.error("Logout error:", error);
     res.status(500).json({ message: "Logout failed" });
   }
 };

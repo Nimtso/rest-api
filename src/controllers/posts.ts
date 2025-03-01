@@ -29,9 +29,13 @@ class PostsController extends BaseController<Post> {
     const filePath = req.file?.path.replace(/\\/g, "/");
     const generativeImageData = await analyzeImage(filePath || "");
     const domain = config.app.domainBase + ":" + config.app.port;
+    const storagePath = config.database.storage;
     res
       .status(200)
-      .send({ url: domain + "/" + filePath, ...generativeImageData });
+      .send({
+        url: `${domain}/${storagePath}/${filePath}`,
+        ...generativeImageData,
+      });
   };
 
   findById = async (req: Request, res: Response): Promise<void> => {
@@ -105,7 +109,6 @@ class PostsController extends BaseController<Post> {
         likesCount: updatedPost?.likes.length || 0,
       });
     } catch (error) {
-      console.error("Error liking post:", error);
       return res.status(500).json({ message: "Server error" });
     }
   };
