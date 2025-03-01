@@ -1,5 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
+import https from "https";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 import Logger from "../utils/logger";
 import config from "../utils/config";
 
@@ -33,7 +35,10 @@ const analyzeImage = async (imageUrl: string, maxRetries = 5, delay = 1000) => {
 
   try {
     Logger.info(`Downloading image from URL: ${imageUrl}`);
-    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    const response = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+    });
     imageBase64 = Buffer.from(response.data, "binary").toString("base64");
   } catch (error) {
     throw new Error("Failed to download the image from the URL.");
