@@ -24,7 +24,7 @@ const createServer = () => {
   app.use(cookieParser());
   swaggerMiddleware(app);
   app.use(loggerMiddleware);
-  app.use("/", routes);
+  app.use("/api", routes);
   app.use("/storage", express.static("storage"));
   app.use(express.static("front"));
 
