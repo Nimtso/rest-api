@@ -25,12 +25,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         user: { id: user._id, email: user.email, name: user.name },
         message: "User registered successfully",
       });
+      return;
     } catch (error) {
       res.status(400).json({ message: "User already exists" });
       return;
     }
-    res.status(400).json({ message: "Registration Failed" });
-    return;
   } catch (error) {
     res.status(400).json({ message: "Registration failed" });
     return;
