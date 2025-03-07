@@ -31,7 +31,9 @@ describe("Auth API (Integration Tests)", () => {
       name: "Test User",
     };
 
-    const response = await request(app).post("/auth/register").send(newUser);
+    const response = await request(app)
+      .post("/api/auth/register")
+      .send(newUser);
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
@@ -51,7 +53,7 @@ describe("Auth API (Integration Tests)", () => {
       name: "Test User",
     });
 
-    const response = await request(app).post("/auth/register").send({
+    const response = await request(app).post("/api/auth/register").send({
       email: "test@example.com",
       password: "password123",
       name: "Another User",
@@ -69,7 +71,7 @@ describe("Auth API (Integration Tests)", () => {
     });
     await user.save();
 
-    const response = await request(app).post("/auth/login").send({
+    const response = await request(app).post("/api/auth/login").send({
       email: "test@example.com",
       password: "password123",
     });
@@ -86,7 +88,7 @@ describe("Auth API (Integration Tests)", () => {
       name: "Test User",
     });
 
-    const response = await request(app).post("/auth/login").send({
+    const response = await request(app).post("/api/auth/login").send({
       email: "test@example.com",
       password: "wrongpassword",
     });
@@ -116,7 +118,7 @@ describe("Auth API (Integration Tests)", () => {
     await user.save();
 
     const response = await request(app)
-      .post("/auth/refresh")
+      .post("/api/auth/refresh")
       .set("Cookie", [`refreshToken=${refreshToken}`]);
 
     expect(response.status).toBe(200);
@@ -125,7 +127,7 @@ describe("Auth API (Integration Tests)", () => {
 
   it("should not refresh tokens with an invalid token", async () => {
     const response = await request(app)
-      .post("/auth/refresh")
+      .post("/api/auth/refresh")
       .set("Cookie", [`refreshToken=invalid`]);
 
     expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
@@ -153,7 +155,7 @@ describe("Auth API (Integration Tests)", () => {
     await user.save();
 
     const response = await request(app)
-      .post("/auth/logout")
+      .post("/api/auth/logout")
       .set("Cookie", [`refreshToken=${refreshToken}`]);
 
     expect(response.status).toBe(200);
@@ -164,7 +166,7 @@ describe("Auth API (Integration Tests)", () => {
   });
 
   it("should return 400 if refreshToken is missing in refresh endpoint", async () => {
-    const response = await request(app).post("/auth/refresh").send({});
+    const response = await request(app).post("/api/auth/refresh").send({});
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty(
       "message",
@@ -179,7 +181,7 @@ describe("Auth API (Integration Tests)", () => {
     );
 
     const response = await request(app)
-      .post("/auth/refresh")
+      .post("/api/auth/refresh")
       .set("Cookie", [`refreshToken=${refreshToken}`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "User not found");
@@ -193,7 +195,7 @@ describe("Auth API (Integration Tests)", () => {
     );
 
     const response = await request(app)
-      .post("/auth/refresh")
+      .post("/api/auth/refresh")
       .set("Cookie", [`refreshToken=${expiredToken}`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty(
@@ -204,7 +206,7 @@ describe("Auth API (Integration Tests)", () => {
 
   it("should return 401 for malformed refreshToken", async () => {
     const response = await request(app)
-      .post("/auth/refresh")
+      .post("/api/auth/refresh")
       .set("Cookie", [`refreshToken=invalid`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
@@ -217,7 +219,7 @@ describe("Auth API (Integration Tests)", () => {
     );
 
     const response = await request(app)
-      .post("/auth/logout")
+      .post("/api/auth/logout")
       .set("Cookie", [`refreshToken=${refreshToken}`])
       .send();
 
@@ -227,7 +229,7 @@ describe("Auth API (Integration Tests)", () => {
 
   it("should return 401 for invalid refreshToken during logout", async () => {
     const response = await request(app)
-      .post("/auth/logout")
+      .post("/api/auth/logout")
       .set("Cookie", [`refreshToken=invalid`]);
     expect(response.status).toBe(401);
     expect(response.body).toHaveProperty("message", "Invalid refresh token");
