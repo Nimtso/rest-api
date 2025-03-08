@@ -32,7 +32,7 @@ describe("Files API (Integration Tests)", () => {
 
     it("should upload an image successfully", async () => {
       const response = await request(app)
-        .post("/files")
+        .post("/api/files")
         .set("Authorization", `Bearer ${mockToken}`)
         .attach("file", testImagePath);
 
@@ -43,7 +43,7 @@ describe("Files API (Integration Tests)", () => {
 
     it("should return 400 if no file is uploaded", async () => {
       const response = await request(app)
-        .post("/files")
+        .post("/api/files")
         .set("Authorization", `Bearer ${mockToken}`);
 
       expect(response.status).toBe(400);

@@ -34,7 +34,7 @@ describe("Comments API (Integration Tests)", () => {
     };
 
     const response = await request(app)
-      .post("/comments")
+      .post("/api/comments")
       .set("Authorization", `Bearer ${mockToken}`)
       .send(newComment);
 
@@ -54,7 +54,9 @@ describe("Comments API (Integration Tests)", () => {
     };
     const insertResult = await commentModel.create(comment);
 
-    const response = await request(app).get(`/comments/${insertResult._id}`);
+    const response = await request(app).get(
+      `/api/comments/${insertResult._id}`
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject(comment);
@@ -75,7 +77,7 @@ describe("Comments API (Integration Tests)", () => {
     ]);
 
     const response = await request(app)
-      .get("/comments")
+      .get("/api/comments")
       .query({ sender: "User1" });
 
     expect(response.status).toBe(200);
@@ -91,7 +93,7 @@ describe("Comments API (Integration Tests)", () => {
     });
 
     const response = await request(app)
-      .delete(`/comments/${comment._id}`)
+      .delete(`/api/comments/${comment._id}`)
       .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
@@ -110,7 +112,7 @@ describe("Comments API (Integration Tests)", () => {
     const commentDocument = await commentModel.create(comment);
 
     const response = await request(app)
-      .put(`/comments/${commentDocument._id}`)
+      .put(`/api/comments/${commentDocument._id}`)
       .set("Authorization", `Bearer ${mockToken}`)
       .send({ ...comment, content: "Updated Comment" });
 
@@ -131,7 +133,7 @@ describe("Comments API (Integration Tests)", () => {
       content: "This is a comment.",
     };
 
-    const response = await request(app).post("/comments").send(newComment);
+    const response = await request(app).post("/api/comments").send(newComment);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe("Access Denied: No Token Provided");
@@ -144,7 +146,7 @@ describe("Comments API (Integration Tests)", () => {
       content: "This comment will be deleted.",
     });
 
-    const response = await request(app).delete(`/comments/${comment._id}`);
+    const response = await request(app).delete(`/api/comments/${comment._id}`);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe("Access Denied: No Token Provided");

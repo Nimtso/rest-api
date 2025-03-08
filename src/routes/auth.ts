@@ -1,5 +1,11 @@
 import express from "express";
-import { login, register, refresh, logout } from "../controllers/auth";
+import {
+  login,
+  register,
+  refresh,
+  logout,
+  googleAuth,
+} from "../controllers/auth";
 import { validateAuth } from "../middlewares/validate";
 
 const router = express.Router();
@@ -61,6 +67,7 @@ const router = express.Router();
  *               $ref: '#/components/schemas/AuthResponse'
  */
 router.post("/register", validateAuth, register);
+router.post("/google", googleAuth);
 
 /**
  * @swagger

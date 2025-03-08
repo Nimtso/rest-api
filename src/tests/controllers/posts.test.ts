@@ -68,7 +68,7 @@ describe("Posts API (Integration Tests)", () => {
     };
 
     const response = await request(app)
-      .post("/posts")
+      .post("/api/posts")
       .set("Authorization", `Bearer ${mockToken}`)
       .send(newPost);
 
@@ -89,7 +89,7 @@ describe("Posts API (Integration Tests)", () => {
     };
 
     const response = await request(app)
-      .post("/posts")
+      .post("/api/posts")
       .set("Authorization", `Bearer ${mockToken}`)
       .send(newPost);
 
@@ -109,7 +109,7 @@ describe("Posts API (Integration Tests)", () => {
     };
 
     const response = await request(app)
-      .post("/posts")
+      .post("/api/posts")
       .set("Authorization", `Bearer ${mockToken}`)
       .send(invalidPost);
 
@@ -126,7 +126,7 @@ describe("Posts API (Integration Tests)", () => {
     });
 
     const response = await request(app)
-      .get(`/posts/${post._id}`)
+      .get(`/api/posts/${post._id}`)
       .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
@@ -154,7 +154,7 @@ describe("Posts API (Integration Tests)", () => {
     ]);
 
     const response = await request(app)
-      .get("/posts")
+      .get("/api/posts")
       .query({ sender: "User1" })
       .set("Authorization", `Bearer ${mockToken}`);
 
@@ -175,7 +175,7 @@ describe("Posts API (Integration Tests)", () => {
     });
 
     const response = await request(app)
-      .delete(`/posts/${post._id}`)
+      .delete(`/api/posts/${post._id}`)
       .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(200);
@@ -199,7 +199,7 @@ describe("Posts API (Integration Tests)", () => {
     };
 
     const response = await request(app)
-      .put(`/posts/${post._id}`)
+      .put(`/api/posts/${post._id}`)
       .set("Authorization", `Bearer ${mockToken}`)
       .send(updatedPost);
 
@@ -217,7 +217,7 @@ describe("Posts API (Integration Tests)", () => {
 
   it("should get 404 for trying to update non-existing post", async () => {
     const response = await request(app)
-      .put(`/posts/${new ObjectId().toString()}`)
+      .put(`/api/posts/${new ObjectId().toString()}`)
       .set("Authorization", `Bearer ${mockToken}`)
       .send({
         title: "fakeName",
@@ -230,7 +230,7 @@ describe("Posts API (Integration Tests)", () => {
     const nonExistentId = new mongoose.Types.ObjectId();
 
     const response = await request(app)
-      .delete(`/posts/${nonExistentId}`)
+      .delete(`/api/posts/${nonExistentId}`)
       .set("Authorization", `Bearer ${mockToken}`);
 
     expect(response.status).toBe(404);
@@ -256,7 +256,7 @@ describe("Posts API (Integration Tests)", () => {
 
     it("should like a post successfully", async () => {
       const response = await request(app)
-        .put(`/posts/${testPost._id}/like`)
+        .put(`/api/posts/${testPost._id}/like`)
         .set("Authorization", `Bearer ${mockToken}`);
 
       expect(response.status).toBe(200);
@@ -273,7 +273,7 @@ describe("Posts API (Integration Tests)", () => {
       });
 
       const response = await request(app)
-        .put(`/posts/${testPost._id}/like`)
+        .put(`/api/posts/${testPost._id}/like`)
         .set("Authorization", `Bearer ${mockToken}`);
 
       expect(response.status).toBe(200);
@@ -286,11 +286,11 @@ describe("Posts API (Integration Tests)", () => {
     it("should prevent duplicate likes from the same user", async () => {
       // First like
       await request(app)
-        .put(`/posts/${testPost._id}/like`)
+        .put(`/api/posts/${testPost._id}/like`)
         .set("Authorization", `Bearer ${mockToken}`);
 
       const response = await request(app)
-        .put(`/posts/${testPost._id}/like`)
+        .put(`/api/posts/${testPost._id}/like`)
         .set("Authorization", `Bearer ${mockToken}`);
 
       expect(response.status).toBe(200);
@@ -313,12 +313,12 @@ describe("Posts API (Integration Tests)", () => {
 
       // First user likes
       await request(app)
-        .put(`/posts/${testPost._id}/like`)
+        .put(`/api/posts/${testPost._id}/like`)
         .set("Authorization", `Bearer ${mockToken}`);
 
       // Second user likes
       const response = await request(app)
-        .put(`/posts/${testPost._id}/like`)
+        .put(`/api/posts/${testPost._id}/like`)
         .set("Authorization", `Bearer ${anotherToken}`);
 
       expect(response.status).toBe(200);
@@ -334,7 +334,7 @@ describe("Posts API (Integration Tests)", () => {
       const fakePostId = new mongoose.Types.ObjectId();
 
       const response = await request(app)
-        .put(`/posts/${fakePostId}/like`)
+        .put(`/api/posts/${fakePostId}/like`)
         .set("Authorization", `Bearer ${mockToken}`);
 
       expect(response.status).toBe(404);
@@ -342,7 +342,9 @@ describe("Posts API (Integration Tests)", () => {
     });
 
     it("should require authentication to like a post", async () => {
-      const response = await request(app).put(`/posts/${testPost._id}/like`);
+      const response = await request(app).put(
+        `/api/posts/${testPost._id}/like`
+      );
 
       expect(response.status).toBe(401);
     });
