@@ -3,6 +3,9 @@ import jwt from "jsonwebtoken";
 
 import UserModel from "../db/models/user";
 import config from "../utils/config";
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client();
 
 const generateTokens = (userId: string) => ({
   accessToken: jwt.sign({ userId }, config.auth.TOKEN_SECRET, {
@@ -32,6 +35,50 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
   } catch (error) {
     res.status(400).json({ message: "Registration failed" });
+    return;
+  }
+};
+
+export const googleAuth = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const credential = req.body.credential;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const email = payload?.email;
+    if (!email) {
+      res.status(400).send("error missing email or password");
+      return;
+    }
+
+    let user = await UserModel.findOne({ email });
+    if (!user) {
+      user = await UserModel.create({
+        email,
+        name: payload.name,
+      });
+    }
+    const tokens = generateTokens(user._id as string);
+    await user.addRefreshToken(tokens.refreshToken);
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: config.app.env === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      accessToken: tokens.accessToken,
+      user: { id: user._id, email: user.email, name: user.name },
+    });
+  } catch (err) {
+    res.status(400).send("Login failed");
     return;
   }
 };
